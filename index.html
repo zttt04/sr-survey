@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>逐样本超分对比</title>
+<style>
+  :root{
+    --ink:#1b1f24; --muted:#6b7280; --line:#e6e8eb; --bg:#ffffff;
+    --accent:#2ea44f; --accent-soft:#e9f7ee; --card:#fbfbfc;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+  header{padding:44px 0 4px}
+  h1{font-size:27px;line-height:1.25;margin:0 0 8px;letter-spacing:-.02em;font-weight:800}
+  .sub{color:var(--muted);font-size:14.5px;margin:0;max-width:76ch}
+
+  section{padding:22px 0 10px}
+  .stage-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin:14px 0 10px}
+  .stage-name{font-size:16px;font-weight:600}
+  .stage-meta{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+
+  /* thumbnail strip */
+  .strip{display:flex;gap:8px;overflow-x:auto;padding:8px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .thumb{flex:0 0 auto;width:68px;height:68px;padding:0;border:2px solid transparent;border-radius:8px;
+    overflow:hidden;background:#fff;cursor:pointer;line-height:0;transition:border-color .15s}
+  .thumb img{display:block;width:100%;height:100%;object-fit:cover}
+  .thumb:hover{border-color:#c9d3dd}
+  .thumb.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+
+  /* 3x2 comparison grid */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column}
+  .img-wrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:#111;cursor:crosshair;line-height:0}
+  .img-wrap img{display:block;width:100%;height:auto;-webkit-user-drag:none}
+  .col-label{text-align:center;font-size:12.5px;color:#4b5563;padding-top:7px}
+  .col.is-ours .col-label{color:var(--accent);font-weight:600}
+  .lens{position:absolute;top:0;left:0;width:42%;aspect-ratio:1/1;border:2px solid #fff;border-radius:6px;
+    background-repeat:no-repeat;background-color:#fff;opacity:0;pointer-events:none;z-index:3;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translate(-9999px,-9999px)}
+  .lens::after{content:"3×";position:absolute;right:4px;bottom:2px;font-family:var(--mono);font-size:9px;
+    color:#fff;background:rgba(0,0,0,.5);padding:1px 4px;border-radius:3px}
+  .dot{position:absolute;top:0;left:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;
+    border:2px solid var(--accent);box-shadow:0 0 0 1px #fff;opacity:0;pointer-events:none;z-index:4}
+
+  .stats{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:12px;
+    display:flex;gap:16px;flex-wrap:wrap;justify-content:center;padding-top:10px;border-top:1px dashed var(--line)}
+  .stats b{color:var(--ink);font-weight:600}
+
+  /* method cards */
+  .methods-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px}
+  .methods-sec h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .methods-sec .lede{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+  .methods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:900px){.methods{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.methods{grid-template-columns:1fr}}
+  .method{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:14px 16px}
+  .method{cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s}
+  .method:hover{border-color:#c9d3dd;box-shadow:0 6px 18px rgba(0,0,0,.06);transform:translateY(-1px)}
+  .method .more{display:inline-block;margin-top:8px;font-size:11.5px;color:var(--accent)}
+
+  .method h3{margin:0;font-size:14.5px;font-weight:600;display:flex;align-items:baseline;gap:8px}
+  .method h3 span{font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400}
+  .method p{margin:6px 0 0;font-size:13px;color:#4b5563;line-height:1.7}
+  .method.is-ours{border-color:#a9dcbb;background:var(--accent-soft)}
+  .method.is-ours h3{color:#14532d}
+
+  /* modal */
+  .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;
+    background:rgba(17,24,39,.45)}
+  .modal.open{display:flex}
+  .modal-card{background:#fff;border-radius:14px;max-width:560px;width:100%;padding:22px 24px;
+    box-shadow:0 24px 60px rgba(0,0,0,.22);position:relative}
+  .modal-card h3{margin:0 0 4px;font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .modal-card .tag{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .modal-close{position:absolute;right:14px;top:12px;border:0;background:none;font-size:20px;line-height:1;
+    color:#9ca3af;cursor:pointer;padding:4px}
+  .modal-close:hover{color:var(--ink)}
+  .kv{display:grid;grid-template-columns:88px 1fr;gap:8px 14px;margin:16px 0 0;font-size:13.5px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0;color:var(--ink)}
+  .modal-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .modal-links a{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid var(--line);
+    border-radius:999px;font-size:13px;color:var(--ink);text-decoration:none}
+  .modal-links a:hover{border-color:#a9dcbb;background:var(--accent-soft)}
+
+  footer{padding:26px 0 56px;margin-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>逐样本超分对比</h1>
+    <p class="sub">同一张 LR，六种处理并排：LR / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax。
+      鼠标移到任一图上，六张同步放大到同一位置；点下方缩略图换样本。</p>
+  </header>
+
+  <section>
+    <div class="strip" id="strip"></div>
+    <div class="stage-head">
+      <span class="stage-name" id="stageName"></span>
+      <span class="stage-meta" id="stageMeta"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+
+  <section class="methods-sec">
+    <h2>方法说明</h2>
+    <p class="lede">六格里的每一项在做什么，按输入输出与来源说明。</p>
+    <div class="methods">
+      <div class="method" data-method="lr">
+        <h3>LR<span>输入</span></h3>
+        <p>参考图 4× 下采样得到的低清图（如 3840×2560 → 960×640），是下面所有方法共同的起点。</p>
+      </div>
+      <div class="method" data-method="bicubic">
+        <h3>双三次<span>Bicubic</span></h3>
+        <p>Pillow 的双三次插值，把 LR 直接放大到参考尺寸。不做任何学习，作为插值基线；协议里另有一份双线性放大版本，同属基线。</p>
+      </div>
+      <div class="method is-ours" data-method="dlss">
+        <h3>DLSS-NR<span>DLSS 5</span></h3>
+        <p>NVIDIA 神经渲染网络的 PyTorch 复现，权重取自 <code>nvngx_dlssnr.dll</code> 310.9.16 的 preset 1（152 层）。只做 1×，输入是双线性放大图，输出与它同尺寸。</p>
+      </div>
+      <div class="method" data-method="tinysr">
+        <h3>TinySR<span>×4</span></h3>
+        <p>轻量级超分模型，官方权重。直接把 LR 作为输入，输出为参考尺寸的 4× 结果。</p>
+      </div>
+      <div class="method" data-method="sinsr">
+        <h3>SinSR<span>×4</span></h3>
+        <p>单步扩散式超分模型，官方权重。同样以 LR 为输入，一次前向输出 4× 结果。</p>
+      </div>
+      <div class="method" data-method="minimax">
+        <h3>MiniMax<span>生成式</span></h3>
+        <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <h3 id="modalTitle"></h3>
+      <div class="tag" id="modalTag"></div>
+      <dl class="kv" id="modalKv"></dl>
+      <div class="modal-links" id="modalLinks"></div>
+    </div>
+  </div>
+
+  <footer>
+    权重来自 NVIDIA <code>nvngx_dlssnr.dll</code>；样本来自 DLSSNR-RDNA3 验证集、Steam 商店截图、原神官方 press 截图与本机照片。
+  </footer>
+</div>
+
+<script>
+const SRB = [
+{
+"stem": "ac_odyssey",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 28.7,
+"ssim": 0.8278
+},
+"dlss": {
+"psnr": 27.47,
+"ssim": 0.9434
+},
+"sinsr": {
+"psnr": 28.34,
+"ssim": 0.8046
+},
+"tinysr": {
+"psnr": 25.59,
+"ssim": 0.7578
+},
+"minimax": {
+"psnr": 20.97,
+"ssim": 0.6707
+},
+"dlss_lr": {
+"psnr": 26.7,
+"ssim": 0.8109
+},
+"bicubic": {
+"psnr": 29.04,
+"ssim": 0.8374
+}
+}
+},
+{
+"stem": "ac_origins",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 24.62,
+"ssim": 0.6924
+},
+"dlss": {
+"psnr": 26.85,
+"ssim": 0.9655
+},
+"sinsr": {
+"psnr": 24.3,
+"ssim": 0.6795
+},
+"tinysr": {
+"psnr": 21.37,
+"ssim": 0.588
+},
+"minimax": {
+"psnr": 16.72,
+"ssim": 0.4358
+},
+"dlss_lr": {
+"psnr": 23.94,
+"ssim": 0.7028
+},
+"bicubic": {
+"psnr": 25.06,
+"ssim": 0.7152
+}
+}
+},
+{
+"stem": "ac_valhalla",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 25.83,
+"ssim": 0.7856
+},
+"dlss": {
+"psnr": 27.14,
+"ssim": 0.9428
+},
+"sinsr": {
+"psnr": 26.06,
+"ssim": 0.767
+},
+"tinysr": {
+"psnr": 23.65,
+"ssim": 0.7083
+},
+"minimax": {
+"psnr": 17.13,
+"ssim": 0.5581
+},
+"dlss_lr": {
+"psnr": 25.15,
+"ssim": 0.7678
+},
+"bicubic": {
+"psnr": 26.22,
+"ssim": 0.7981
+}
+}
+},
+{
+"stem": "cyberpunk",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 28.32,
+"ssim": 0.9044
+},
+"dlss": {
+"psnr": 30.21,
+"ssim": 0.9807
+},
+"sinsr": {
+"psnr": 29.01,
+"ssim": 0.8944
+},
+"tinysr": {
+"psnr": 27.14,
+"ssim": 0.8883
+},
+"minimax": {
+"psnr": 21.02,
+"ssim": 0.7912
+},
+"dlss_lr": {
+"psnr": 27.62,
+"ssim": 0.9016
+},
+"bicubic": {
+"psnr": 28.63,
+"ssim": 0.908
+}
+}
+},
+{
+"stem": "genshin_1",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 27.6,
+"ssim": 0.7763
+},
+"dlss": {
+"psnr": 26.19,
+"ssim": 0.9694
+},
+"sinsr": {
+"psnr": 27.43,
+"ssim": 0.7614
+},
+"tinysr": {
+"psnr": 23.62,
+"ssim": 0.6634
+},
+"minimax": {
+"psnr": 18.99,
+"ssim": 0.5365
+},
+"dlss_lr": {
+"psnr": 25.81,
+"ssim": 0.7773
+},
+"bicubic": {
+"psnr": 28.09,
+"ssim": 0.7912
+}
+}
+},
+{
+"stem": "genshin_2",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 28.14,
+"ssim": 0.8099
+},
+"dlss": {
+"psnr": 26.98,
+"ssim": 0.9679
+},
+"sinsr": {
+"psnr": 27.4,
+"ssim": 0.7665
+},
+"tinysr": {
+"psnr": 24.35,
+"ssim": 0.662
+},
+"dlss_lr": {
+"psnr": 25.96,
+"ssim": 0.8037
+},
+"bicubic": {
+"psnr": 28.54,
+"ssim": 0.8217
+}
+}
+},
+{
+"stem": "genshin_3",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": 8.01,
+"scores": {
+"bilinear": {
+"psnr": 28.81,
+"ssim": 0.842
+},
+"dlss": {
+"psnr": 29.16,
+"ssim": 0.9762
+},
+"sinsr": {
+"psnr": 28.76,
+"ssim": 0.8135
+},
+"tinysr": {
+"psnr": 25.99,
+"ssim": 0.7361
+},
+"minimax": {
+"psnr": 19.56,
+"ssim": 0.6306
+},
+"dlss_lr": {
+"psnr": 27.4,
+"ssim": 0.8404
+},
+"bicubic": {
+"psnr": 29.33,
+"ssim": 0.8532
+}
+}
+},
+{
+"stem": "photo_1",
+"strict": false,
+"width": 929,
+"height": 530,
+"seconds": 2.18,
+"scores": {
+"bilinear": {
+"psnr": 28.08,
+"ssim": 0.8275
+},
+"dlss": {
+"psnr": 32.97,
+"ssim": 0.9929
+},
+"sinsr": {
+"psnr": 26.17,
+"ssim": 0.7749
+},
+"tinysr": {
+"psnr": 23.31,
+"ssim": 0.7126
+},
+"minimax": {
+"psnr": 19.2,
+"ssim": 0.5714
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 27.25,
+"ssim": 0.8286
+},
+"bicubic": {
+"psnr": 28.52,
+"ssim": 0.839
+}
+}
+},
+{
+"stem": "photo_2",
+"strict": false,
+"width": 929,
+"height": 530,
+"seconds": 2.02,
+"scores": {
+"bilinear": {
+"psnr": 28.73,
+"ssim": 0.8275
+},
+"dlss": {
+"psnr": 32.17,
+"ssim": 0.9905
+},
+"sinsr": {
+"psnr": 26.9,
+"ssim": 0.7749
+},
+"tinysr": {
+"psnr": 23.67,
+"ssim": 0.6988
+},
+"minimax": {
+"psnr": 19.84,
+"ssim": 0.6029
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 27.59,
+"ssim": 0.8288
+},
+"bicubic": {
+"psnr": 29.23,
+"ssim": 0.8392
+}
+}
+},
+{
+"stem": "photo_3",
+"strict": false,
+"width": 929,
+"height": 530,
+"seconds": 2.08,
+"scores": {
+"bilinear": {
+"psnr": 26.11,
+"ssim": 0.6949
+},
+"dlss": {
+"psnr": 31.49,
+"ssim": 0.9879
+},
+"sinsr": {
+"psnr": 25.42,
+"ssim": 0.6671
+},
+"tinysr": {
+"psnr": 22.77,
+"ssim": 0.5725
+},
+"minimax": {
+"psnr": 19.54,
+"ssim": 0.5137
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 25.19,
+"ssim": 0.6961
+},
+"bicubic": {
+"psnr": 26.47,
+"ssim": 0.7086
+}
+}
+},
+{
+"stem": "photo_4",
+"strict": false,
+"width": 943,
+"height": 532,
+"seconds": 2.22,
+"scores": {
+"bilinear": {
+"psnr": 25.78,
+"ssim": 0.7576
+},
+"dlss": {
+"psnr": 28.23,
+"ssim": 0.9811
+},
+"sinsr": {
+"psnr": 23.37,
+"ssim": 0.683
+},
+"tinysr": {
+"psnr": 20.85,
+"ssim": 0.5821
+},
+"minimax": {
+"psnr": 15.53,
+"ssim": 0.3456
+},
+"dlss_lr": {
+"psnr": 24.98,
+"ssim": 0.7585
+},
+"bicubic": {
+"psnr": 26.33,
+"ssim": 0.781
+}
+}
+},
+{
+"stem": "photo_5",
+"strict": false,
+"width": 943,
+"height": 532,
+"seconds": 2.02,
+"scores": {
+"bilinear": {
+"psnr": 26.32,
+"ssim": 0.7617
+},
+"dlss": {
+"psnr": 27.59,
+"ssim": 0.9766
+},
+"sinsr": {
+"psnr": 24.13,
+"ssim": 0.6863
+},
+"tinysr": {
+"psnr": 21.13,
+"ssim": 0.5854
+},
+"minimax": {
+"psnr": 15.81,
+"ssim": 0.361
+},
+"dlss_lr": {
+"psnr": 25.56,
+"ssim": 0.7634
+},
+"bicubic": {
+"psnr": 26.91,
+"ssim": 0.7844
+}
+}
+},
+{
+"stem": "photo_6",
+"strict": false,
+"width": 943,
+"height": 532,
+"seconds": 2.06,
+"scores": {
+"bilinear": {
+"psnr": 21.98,
+"ssim": 0.6327
+},
+"dlss": {
+"psnr": 26.57,
+"ssim": 0.9668
+},
+"sinsr": {
+"psnr": 21.41,
+"ssim": 0.6235
+},
+"tinysr": {
+"psnr": 19.59,
+"ssim": 0.5562
+},
+"minimax": {
+"psnr": 14.54,
+"ssim": 0.3046
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 21.41,
+"ssim": 0.6378
+},
+"bicubic": {
+"psnr": 22.3,
+"ssim": 0.6566
+}
+}
+},
+{
+"stem": "tomb_1080",
+"strict": true,
+"width": 1920,
+"height": 1080,
+"seconds": 7.8,
+"scores": {
+"bilinear": {
+"psnr": 27.09,
+"ssim": 0.7445
+},
+"dlss": {
+"psnr": 26.43,
+"ssim": 0.9623
+},
+"sinsr": {
+"psnr": 27.18,
+"ssim": 0.7334
+},
+"tinysr": {
+"psnr": 24.26,
+"ssim": 0.6513
+},
+"minimax": {
+"psnr": 18.39,
+"ssim": 0.4944
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 25.42,
+"ssim": 0.7422
+},
+"bicubic": {
+"psnr": 27.5,
+"ssim": 0.7589
+}
+}
+},
+{
+"stem": "tomb_1440",
+"strict": true,
+"width": 2560,
+"height": 1440,
+"seconds": 15.39,
+"scores": {
+"bilinear": {
+"psnr": 27.83,
+"ssim": 0.7627
+},
+"dlss": {
+"psnr": 27.71,
+"ssim": 0.9683
+},
+"sinsr": {
+"psnr": 26.95,
+"ssim": 0.7162
+},
+"tinysr": {
+"psnr": 24.64,
+"ssim": 0.6529
+},
+"minimax": {
+"psnr": 24.78,
+"ssim": 0.6903
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 26.23,
+"ssim": 0.7603
+},
+"bicubic": {
+"psnr": 28.26,
+"ssim": 0.7769
+}
+}
+},
+{
+"stem": "tomb_2160",
+"strict": true,
+"width": 3840,
+"height": 2160,
+"seconds": 40.21,
+"scores": {
+"bilinear": {
+"psnr": 29.02,
+"ssim": 0.7956
+},
+"dlss": {
+"psnr": 28.69,
+"ssim": 0.9728
+},
+"sinsr": {
+"psnr": 27.68,
+"ssim": 0.7369
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 27.39,
+"ssim": 0.7934
+},
+"bicubic": {
+"psnr": 29.5,
+"ssim": 0.8095
+}
+}
+},
+{
+"stem": "witcher3",
+"strict": false,
+"width": 1920,
+"height": 1080,
+"seconds": 10.02,
+"scores": {
+"bilinear": {
+"psnr": 35.77,
+"ssim": 0.9092
+},
+"dlss": {
+"psnr": 29.21,
+"ssim": 0.9051
+},
+"tinysr": {
+"psnr": 32.07,
+"ssim": 0.8135
+},
+"gt": {
+"psnr": Infinity,
+"ssim": 1.0
+},
+"dlss_lr": {
+"psnr": 29.21,
+"ssim": 0.845
+},
+"bicubic": {
+"psnr": 36.3,
+"ssim": 0.9152
+}
+}
+},
+{
+"stem": "extra_1_portrait",
+"strict": false,
+"width": 3433,
+"height": 5151,
+"seconds": NaN,
+"scores": {
+"bilinear": {
+"psnr": 30.13,
+"ssim": 0.8424
+},
+"sinsr": {
+"psnr": 29.76,
+"ssim": 0.8336
+},
+"tinysr": {
+"psnr": 23.8,
+"ssim": 0.6988
+},
+"minimax": {
+"psnr": 24.65,
+"ssim": 0.7628
+},
+"bicubic": {
+"psnr": 30.4,
+"ssim": 0.8503
+},
+"dlss_lr": {
+"psnr": 27.77,
+"ssim": 0.8321
+}
+},
+"extra": true
+},
+{
+"stem": "extra_2_portrait_cc0",
+"strict": false,
+"width": 3840,
+"height": 2560,
+"seconds": 40.81,
+"scores": {
+"bilinear": {
+"psnr": 26.62,
+"ssim": 0.6835
+},
+"sinsr": {
+"psnr": 27.69,
+"ssim": 0.6987
+},
+"tinysr": {
+"psnr": 24.15,
+"ssim": 0.5947
+},
+"minimax": {
+"psnr": 23.07,
+"ssim": 0.6144
+},
+"bicubic": {
+"psnr": 27.1,
+"ssim": 0.6953
+},
+"dlss_lr": {
+"psnr": 25.12,
+"ssim": 0.6814
+}
+},
+"extra": true
+},
+{
+"stem": "extra_3_dog",
+"strict": false,
+"width": 2976,
+"height": 1984,
+"seconds": 21.5,
+"scores": {
+"bilinear": {
+"psnr": 37.18,
+"ssim": 0.9358
+},
+"sinsr": {
+"psnr": 34.65,
+"ssim": 0.9156
+},
+"tinysr": {
+"psnr": 26.74,
+"ssim": 0.6876
+},
+"minimax": {
+"psnr": 30.33,
+"ssim": 0.8879
+},
+"bicubic": {
+"psnr": 38.19,
+"ssim": 0.942
+},
+"dlss_lr": {
+"psnr": 32.76,
+"ssim": 0.9332
+}
+},
+"extra": true
+},
+{
+"stem": "extra_4_cat",
+"strict": false,
+"width": 3840,
+"height": 2442,
+"seconds": 34.83,
+"scores": {
+"bilinear": {
+"psnr": 34.03,
+"ssim": 0.8173
+},
+"sinsr": {
+"psnr": 32.81,
+"ssim": 0.8033
+},
+"tinysr": {
+"psnr": 30.87,
+"ssim": 0.7787
+},
+"minimax": {
+"psnr": 24.86,
+"ssim": 0.7502
+},
+"bicubic": {
+"psnr": 34.35,
+"ssim": 0.8212
+},
+"dlss_lr": {
+"psnr": 32.89,
+"ssim": 0.8174
+}
+},
+"extra": true
+},
+{
+"stem": "extra_5_car",
+"strict": false,
+"width": 3840,
+"height": 2560,
+"seconds": 46.17,
+"scores": {
+"bilinear": {
+"psnr": 20.35,
+"ssim": 0.639
+},
+"sinsr": {
+"psnr": 21.26,
+"ssim": 0.6777
+},
+"tinysr": {
+"psnr": 19.6,
+"ssim": 0.5463
+},
+"minimax": {
+"psnr": 15.94,
+"ssim": 0.4085
+},
+"bicubic": {
+"psnr": 20.91,
+"ssim": 0.6743
+},
+"dlss_lr": {
+"psnr": 20.24,
+"ssim": 0.6423
+}
+},
+"extra": true
+},
+{
+"stem": "extra_6_still_life",
+"strict": false,
+"width": 3840,
+"height": 2560,
+"seconds": 40.48,
+"scores": {
+"bilinear": {
+"psnr": 43.24,
+"ssim": 0.9716
+},
+"sinsr": {
+"psnr": 38.48,
+"ssim": 0.9515
+},
+"tinysr": {
+"psnr": 35.5,
+"ssim": 0.9224
+},
+"minimax": {
+"psnr": 27.12,
+"ssim": 0.9059
+},
+"bicubic": {
+"psnr": 43.85,
+"ssim": 0.9729
+},
+"dlss_lr": {
+"psnr": 31.97,
+"ssim": 0.9039
+}
+},
+"extra": true
+}
+];
+
+const TILES = [
+  ["lr", "LR", false],
+  ["bicubic", "双三次", false],
+  ["dlss_lr", "DLSS-NR", true],
+  ["tinysr", "TinySR", false],
+  ["sinsr", "SinSR", false],
+  ["minimax", "MiniMax", false],
+];
+const NEEDED = ["bicubic", "dlss_lr", "tinysr", "sinsr", "minimax"];
+const LABEL = {
+  tomb_1080: "Tomb Raider 2013 · 1080p", tomb_1440: "Tomb Raider 2013 · 1440p",
+  tomb_2160: "Tomb Raider 2013 · 4K", witcher3: "The Witcher 3",
+  ac_origins: "Assassin's Creed Origins", ac_odyssey: "Assassin's Creed Odyssey",
+  ac_valhalla: "Assassin's Creed Valhalla", cyberpunk: "Cyberpunk 2077",
+  genshin_1: "原神 · 须弥城", genshin_2: "原神 · 雨林", genshin_3: "原神 · 营地",
+  photo_1: "实景照片 1", photo_2: "实景照片 2", photo_3: "实景照片 3",
+  photo_4: "实景照片 4", photo_5: "实景照片 5", photo_6: "实景照片 6",
+  extra_1_portrait: "人像 · 竖构图", extra_2_portrait_cc0: "人像 · CC0",
+  extra_3_dog: "dog", extra_4_cat: "cat", extra_5_car: "car", extra_6_still_life: "still life",
+};
+
+const complete = SRB.filter(r => NEEDED.every(k => r.scores[k] && isFinite(r.scores[k].psnr)));
+
+/* 参考尺寸与 LR 尺寸的范围，用于弹窗标注 */
+const _sizes = SRB.map(r => [r.width, r.height]);
+const _min = _sizes.reduce((a, b) => (b[0] * b[1] < a[0] * a[1] ? b : a));
+const _max = _sizes.reduce((a, b) => (b[0] * b[1] > a[0] * a[1] ? b : a));
+const REF_RANGE = `${_min[0]}×${_min[1]} … ${_max[0]}×${_max[1]}`;
+const LR_RANGE = `${Math.floor(_min[0] / 4)}×${Math.floor(_min[1] / 4)} … ${Math.floor(_max[0] / 4)}×${Math.floor(_max[1] / 4)}`;
+let current = (new URLSearchParams(location.search).get("s")) || complete[0].stem;
+if (!complete.some(r => r.stem === current)) current = complete[0].stem;
+
+function buildStrip(){
+  const strip = document.getElementById("strip");
+  strip.innerHTML = "";
+  complete.forEach(row => {
+    const b = document.createElement("button");
+    b.className = "thumb" + (row.stem === current ? " on" : "");
+    b.title = LABEL[row.stem] || row.stem;
+    b.innerHTML = `<img src="media/bm_${row.stem}.bicubic.jpg" alt="${b.title}" loading="lazy">`;
+    b.onclick = () => { current = row.stem; render();
+
+/* ---------- method info modal ---------- */
+const METHODS = {
+  lr: {
+    title: "LR（输入）", tag: "低分辨率输入",
+    rows: [["尺寸", `${LR_RANGE}（参考图的 1/4 边长）`], ["参数量", "0"]],
+    links: [],
+    note: "",
+  },
+  bicubic: {
+    title: "双三次插值", tag: "Bicubic baseline",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+           ["参数量", "0"], ["实现", "Pillow BICUBIC"]],
+    links: [],
+  },
+  dlss: {
+    title: "DLSS-NR（DLSS 5）", tag: "神经渲染后处理 · 1×",
+    rows: [["输入", `双线性放大图，${REF_RANGE}`], ["输出", "与输入同尺寸"],
+           ["参数量", "147.7 M"], ["权重体积", "147 MB（weights.safetensors）"],
+           ["推理速度", "输入=输出：929×530 → 3.3 s · 1920×1080 → 8.4 s · 2560×1440 → 13.8 s · 3840×2160 → 35.9 s（M4 Pro CPU）"],
+           ["结构", "152 层，preset 1"], ["运行", "PyTorch · CPU"]],
+    links: [["复现仓库", "https://github.com/mauri870/dlssnr-pytorch"],
+            ["验证样本", "https://github.com/mauri870/DLSSNR-RDNA3"]],
+  },
+  tinysr: {
+    title: "TinySR", tag: "剪枝扩散 · ×4",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+           ["参数量", "611.7 M（backbone 579.7 M + LoRA 30.6 M + VAE 1.4 M）"],
+           ["权重体积", "1.5 GB"],
+           ["推理速度", "输入 480×270–960×540 → 输出 1920×1080–3840×2160：端到端 0.94 s/张、模型前向 0.25 s/张（H800，17 张平均）"],
+           ["论文", "arXiv 2508.17434（CVPR 2026 Findings）"]],
+    links: [["Paper", "https://arxiv.org/abs/2508.17434"],
+            ["GitHub", "https://github.com/Microtreei/TinySR"]],
+  },
+  sinsr: {
+    title: "SinSR", tag: "单步扩散超分 · ×4",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+           ["参数量", "174.7 M（SinSR_v1 119.4 M + VAE 55.3 M）"],
+           ["权重体积", "765 MB"],
+           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：6.1 s/张（H800，6 张平均）"],
+           ["论文", "arXiv 2311.14760（CVPR 2024）"]],
+    links: [["Paper", "https://arxiv.org/abs/2311.14760"],
+            ["GitHub", "https://github.com/wyf0912/SinSR"]],
+  },
+  minimax: {
+    title: "MiniMax H3-Image", tag: "生成式图像编辑",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+           ["参数量", "67.1 B（生成主干 33.1 B + 文本编码器 33.4 B + VAE 0.58 B）"],
+           ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
+           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：22.6–29.2 s/张（H800 日志，denoise 约 22–28 s + decode 0.4 s）"],
+           ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重"]],
+    links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
+  },
+};
+
+const modal = document.getElementById("modal");
+function openModal(key){
+  const m = METHODS[key];
+  if (!m) return;
+  document.getElementById("modalTitle").textContent = m.title;
+  document.getElementById("modalTag").textContent = m.tag;
+  document.getElementById("modalKv").innerHTML = m.rows
+    .map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  document.getElementById("modalLinks").innerHTML = m.links
+    .map(([label, href]) => `<a href="${href}" target="_blank" rel="noopener">${label} ↗</a>`).join("");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+function closeModal(){
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+document.querySelectorAll(".method[data-method]").forEach(card => {
+  card.addEventListener("click", () => openModal(card.dataset.method));
+});
+document.getElementById("modalClose").addEventListener("click", closeModal);
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); }); };
+    strip.appendChild(b);
+  });
+}
+
+function render(){
+  const row = complete.find(r => r.stem === current);
+  const refSize = `${row.width}×${row.height}`;
+  const lrW = Math.floor(row.width / 4), lrH = Math.floor(row.height / 4);
+  document.getElementById("stageName").textContent = LABEL[row.stem] || row.stem;
+  document.getElementById("stageMeta").textContent = `LR ${lrW}×${lrH} → 参考 ${refSize}`;
+
+  const grid = document.getElementById("grid");
+  grid.innerHTML = TILES.map(([key, name, ours]) => `
+    <div class="col${ours ? " is-ours" : ""}">
+      <div class="img-wrap" data-key="${key}">
+        <img src="media/bm_${row.stem}.${key}.jpg" alt="${name}"
+             data-size="${key === "lr" ? `${lrW}×${lrH}` : refSize}">
+        <div class="lens"></div><div class="dot"></div>
+      </div>
+      <div class="col-label">${name}</div>
+    </div>`).join("");
+
+  document.getElementById("stats").innerHTML =
+    [["bicubic","双三次"],["dlss_lr","DLSS-NR"],["tinysr","TinySR"],["sinsr","SinSR"],["minimax","MiniMax"]]
+      .map(([k, n]) => `${n} <b>${row.scores[k].psnr.toFixed(2)}</b> dB`).join(" · ") +
+    ` <span style="color:#9ca3af">（对参考图，越高越好）</span>`;
+
+  initLens(grid);
+  buildStrip();
+}
+
+let bound = false;
+function initLens(grid){
+  const hosts = [...grid.querySelectorAll(".img-wrap")];
+  const show = (px, py) => {
+    for (const host of hosts){
+      const w = host.clientWidth, h = host.clientHeight;
+      const lens = host.querySelector(".lens"), dot = host.querySelector(".dot");
+      const size = lens.offsetWidth;
+      if (!w || !h || !size) continue;
+      const ZOOM = 3;
+      lens.style.backgroundImage = `url("${host.querySelector("img").src}")`;
+      lens.style.backgroundSize = `${w * ZOOM}px ${h * ZOOM}px`;
+      lens.style.backgroundPosition = `${-(px * w * ZOOM - size / 2)}px ${-(py * h * ZOOM - size / 2)}px`;
+      let lx = px * w + 10, ly = py * h + 10;
+      if (lx + size > w) lx = px * w - 10 - size;
+      if (ly + size > h) ly = py * h - 10 - size;
+      lens.style.transform = `translate(${Math.max(0, Math.min(w - size, lx))}px, ${Math.max(0, Math.min(h - size, ly))}px)`;
+      lens.style.opacity = 1;
+      dot.style.transform = `translate(${px * w}px, ${py * h}px)`;
+      dot.style.opacity = 1;
+    }
+  };
+  const hide = () => hosts.forEach(h => {
+    h.querySelector(".lens").style.opacity = 0;
+    h.querySelector(".dot").style.opacity = 0;
+  });
+  hosts.forEach(host => {
+    host.onpointermove = e => {
+      const r = host.getBoundingClientRect();
+      show(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+           Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
+    };
+    host.onpointerleave = hide;
+  });
+}
+
+render();
+
+/* ---------- method info modal ---------- */
+const METHODS = {
+  lr: {
+    title: "LR（输入）", tag: "低分辨率输入",
+    rows: [["尺寸", `${LR_RANGE}（参考图的 1/4 边长）`], ["参数量", "0"]],
+    links: [],
+    note: "",
+  },
+  bicubic: {
+    title: "双三次插值", tag: "Bicubic baseline",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+           ["参数量", "0"], ["实现", "Pillow BICUBIC"]],
+    links: [],
+  },
+  dlss: {
+    title: "DLSS-NR（DLSS 5）", tag: "神经渲染后处理 · 1×",
+    rows: [["输入", `双线性放大图，${REF_RANGE}`], ["输出", "与输入同尺寸"],
+           ["参数量", "147.7 M"], ["权重体积", "147 MB（weights.safetensors）"],
+           ["推理速度", "输入=输出：929×530 → 3.3 s · 1920×1080 → 8.4 s · 2560×1440 → 13.8 s · 3840×2160 → 35.9 s（M4 Pro CPU）"],
+           ["结构", "152 层，preset 1"], ["运行", "PyTorch · CPU"]],
+    links: [["复现仓库", "https://github.com/mauri870/dlssnr-pytorch"],
+            ["验证样本", "https://github.com/mauri870/DLSSNR-RDNA3"]],
+  },
+  tinysr: {
+    title: "TinySR", tag: "剪枝扩散 · ×4",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+           ["参数量", "611.7 M（backbone 579.7 M + LoRA 30.6 M + VAE 1.4 M）"],
+           ["权重体积", "1.5 GB"],
+           ["推理速度", "输入 480×270–960×540 → 输出 1920×1080–3840×2160：端到端 0.94 s/张、模型前向 0.25 s/张（H800，17 张平均）"],
+           ["论文", "arXiv 2508.17434（CVPR 2026 Findings）"]],
+    links: [["Paper", "https://arxiv.org/abs/2508.17434"],
+            ["GitHub", "https://github.com/Microtreei/TinySR"]],
+  },
+  sinsr: {
+    title: "SinSR", tag: "单步扩散超分 · ×4",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+           ["参数量", "174.7 M（SinSR_v1 119.4 M + VAE 55.3 M）"],
+           ["权重体积", "765 MB"],
+           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：6.1 s/张（H800，6 张平均）"],
+           ["论文", "arXiv 2311.14760（CVPR 2024）"]],
+    links: [["Paper", "https://arxiv.org/abs/2311.14760"],
+            ["GitHub", "https://github.com/wyf0912/SinSR"]],
+  },
+  minimax: {
+    title: "MiniMax H3-Image", tag: "生成式图像编辑",
+    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+           ["参数量", "67.1 B（生成主干 33.1 B + 文本编码器 33.4 B + VAE 0.58 B）"],
+           ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
+           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：22.6–29.2 s/张（H800 日志，denoise 约 22–28 s + decode 0.4 s）"],
+           ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重"]],
+    links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
+  },
+};
+
+const modal = document.getElementById("modal");
+function openModal(key){
+  const m = METHODS[key];
+  if (!m) return;
+  document.getElementById("modalTitle").textContent = m.title;
+  document.getElementById("modalTag").textContent = m.tag;
+  document.getElementById("modalKv").innerHTML = m.rows
+    .map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  document.getElementById("modalLinks").innerHTML = m.links
+    .map(([label, href]) => `<a href="${href}" target="_blank" rel="noopener">${label} ↗</a>`).join("");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+function closeModal(){
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+document.querySelectorAll(".method[data-method]").forEach(card => {
+  card.addEventListener("click", () => openModal(card.dataset.method));
+});
+document.getElementById("modalClose").addEventListener("click", closeModal);
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+</script>
+</body>
+</html>
