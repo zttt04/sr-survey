@@ -122,6 +122,30 @@
     border-radius:999px;font-size:13px;color:var(--ink);text-decoration:none}
   .modal-links a:hover{border-color:#a9dcbb;background:var(--accent-soft)}
 
+  /* ---- charts ---- */
+  .charts-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
+  .charts-sec h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .charts-sec .lede{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:88ch}
+  .charts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:1000px){.charts{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.charts{grid-template-columns:1fr}}
+  .chart-card{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:12px 14px}
+  .chart-card h4{margin:0;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+  .chart-card h4 span{font-family:var(--mono);font-size:10px;font-weight:400;color:var(--muted)}
+  .bars{margin-top:9px;display:flex;flex-direction:column;gap:5px}
+  .bar-row{display:grid;grid-template-columns:74px 1fr 48px;align-items:center;gap:6px}
+  .bar-name{font-size:10.5px;color:#4b5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{height:9px;background:#eceef1;border-radius:999px;overflow:hidden}
+  .bar{height:100%;border-radius:999px;transition:width .3s}
+  .bar-val{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right}
+  .bar-row.best .bar-val{color:#14532d;font-weight:700}
+  .bar-row.best .bar-track{box-shadow:0 0 0 1px #a9dcbb inset}
+  .speed-charts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:1000px){.speed-charts{grid-template-columns:1fr}}
+  .speed-charts .chart-card h4{margin-bottom:2px}
+  .speed-charts .note{font-size:10px;color:#9ca3af;font-family:var(--mono);margin:0 0 4px}
+  .speed-charts .bar-row{grid-template-columns:78px 1fr 58px}
+
   /* real SR benchmark */
   .realsr-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
   .realsr-sec h2,.realsr-samples h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
@@ -155,6 +179,35 @@
     <p class="sub">五个方法（双线性 / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax）在同一份 RealSR 官方测试集上的
       定量指标、逐样本对比，以及 H800 上的实测推理速度。所有数字都是自己跑出来的，不是论文引用值。</p>
   </header>
+
+  <section class="realsr-samples" id="realsr-samples">
+    <h2>逐样本交互对比</h2>
+    <p class="lede">同一份测试集里的 10 个裁剪样本，八张图同步 3× 放大：鼠标移到任一图上，其余七张跟到同一位置。
+      LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照；
+      DLSS-NR 那一格是「双线性 4× 放大 → DLSS-NR 1×」的结果，规则与指标表一致。</p>
+    <div class="strip" id="rsStrip"></div>
+    <div class="stage-head">
+      <span class="stage-name" id="rsName"></span>
+      <span class="stage-meta" id="rsMeta"></span>
+    </div>
+    <div class="grid rs-grid" id="rsGrid"></div>
+  </section>
+
+
+  <section class="charts-sec" id="charts">
+    <h2>指标可视化</h2>
+    <p class="lede">下方定量表里 8 个指标的形状。每格是同一指标下六个方法的条形，<b>满格 = 该指标的最优值</b>，
+      颜色固定对应方法（DLSS-NR 为绿色）。PSNR/SSIM/MUSIQ/MANIQA 越高越好，LPIPS/DISTS/NIQE/FID 越低越好，
+      看的时候别把两张图的长度直接横比。</p>
+    <div class="charts"><div class="chart-card"><h4>PSNR<span>↑ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:99.1%;background:#b6bcc4"></div></div><span class="bar-val">26.88</span></div><div class="bar-row best"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8b949e"></div></div><span class="bar-val">27.11</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:97.9%;background:#2ea44f"></div></div><span class="bar-val">26.56</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:91.4%;background:#3b6fe0"></div></div><span class="bar-val">24.79</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:96.8%;background:#8a5cd6"></div></div><span class="bar-val">26.25</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:72.3%;background:#d97a2b"></div></div><span class="bar-val">19.59</span></div></div></div><div class="chart-card"><h4>SSIM<span>↑ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:98.7%;background:#b6bcc4"></div></div><span class="bar-val">0.7457</span></div><div class="bar-row best"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8b949e"></div></div><span class="bar-val">0.7555</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:98.3%;background:#2ea44f"></div></div><span class="bar-val">0.7426</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:94.9%;background:#3b6fe0"></div></div><span class="bar-val">0.7171</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:97.2%;background:#8a5cd6"></div></div><span class="bar-val">0.7342</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:77.0%;background:#d97a2b"></div></div><span class="bar-val">0.5814</span></div></div></div><div class="chart-card"><h4>LPIPS<span>↓ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:59.2%;background:#b6bcc4"></div></div><span class="bar-val">0.4736</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:61.5%;background:#8b949e"></div></div><span class="bar-val">0.4564</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:59.7%;background:#2ea44f"></div></div><span class="bar-val">0.4700</span></div><div class="bar-row best"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#3b6fe0"></div></div><span class="bar-val">0.2806</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:87.7%;background:#8a5cd6"></div></div><span class="bar-val">0.3198</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:72.6%;background:#d97a2b"></div></div><span class="bar-val">0.3867</span></div></div></div><div class="chart-card"><h4>DISTS<span>↓ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:78.1%;background:#b6bcc4"></div></div><span class="bar-val">0.2718</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:80.6%;background:#8b949e"></div></div><span class="bar-val">0.2633</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:78.1%;background:#2ea44f"></div></div><span class="bar-val">0.2720</span></div><div class="bar-row best"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#3b6fe0"></div></div><span class="bar-val">0.2123</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:90.4%;background:#8a5cd6"></div></div><span class="bar-val">0.2349</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:89.2%;background:#d97a2b"></div></div><span class="bar-val">0.2380</span></div></div></div><div class="chart-card"><h4>NIQE<span>↓ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:44.5%;background:#b6bcc4"></div></div><span class="bar-val">10.64</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:52.7%;background:#8b949e"></div></div><span class="bar-val">8.99</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:48.2%;background:#2ea44f"></div></div><span class="bar-val">9.83</span></div><div class="bar-row best"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#3b6fe0"></div></div><span class="bar-val">4.74</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:75.0%;background:#8a5cd6"></div></div><span class="bar-val">6.32</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:93.3%;background:#d97a2b"></div></div><span class="bar-val">5.08</span></div></div></div><div class="chart-card"><h4>MUSIQ<span>↑ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:35.6%;background:#b6bcc4"></div></div><span class="bar-val">24.83</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:37.0%;background:#8b949e"></div></div><span class="bar-val">25.81</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:35.2%;background:#2ea44f"></div></div><span class="bar-val">24.57</span></div><div class="bar-row best"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#3b6fe0"></div></div><span class="bar-val">69.78</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:86.8%;background:#8a5cd6"></div></div><span class="bar-val">60.59</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:95.6%;background:#d97a2b"></div></div><span class="bar-val">66.72</span></div></div></div><div class="chart-card"><h4>MANIQA<span>↑ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:54.6%;background:#b6bcc4"></div></div><span class="bar-val">0.3447</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:55.9%;background:#8b949e"></div></div><span class="bar-val">0.3529</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:54.7%;background:#2ea44f"></div></div><span class="bar-val">0.3456</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:98.3%;background:#3b6fe0"></div></div><span class="bar-val">0.6211</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:85.8%;background:#8a5cd6"></div></div><span class="bar-val">0.5420</span></div><div class="bar-row best"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#d97a2b"></div></div><span class="bar-val">0.6317</span></div></div></div><div class="chart-card"><h4>FID<span>↓ 满格=最优</span></h4><div class="bars"><div class="bar-row"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:80.9%;background:#b6bcc4"></div></div><span class="bar-val">146.06</span></div><div class="bar-row"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:83.9%;background:#8b949e"></div></div><span class="bar-val">140.84</span></div><div class="bar-row"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:82.2%;background:#2ea44f"></div></div><span class="bar-val">143.83</span></div><div class="bar-row best"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#3b6fe0"></div></div><span class="bar-val">118.16</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:85.7%;background:#8a5cd6"></div></div><span class="bar-val">137.92</span></div><div class="bar-row"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:93.9%;background:#d97a2b"></div></div><span class="bar-val">125.79</span></div></div></div></div>
+
+    <h2 style="margin-top:26px">推理速度可视化</h2>
+    <p class="lede">三档输出规格下的端到端延迟，<b>对数刻度</b>（否则 21 ms 和 5.7 s 放在一起没法看）。
+      柱长代表 log10(耗时的相对位置)，右侧标注真实耗时。TinySR、SinSR 走各自的切块推理，
+      DLSS-NR 是 1× 网络，耗时对应「同尺寸输入」。</p>
+    <div class="speed-charts"><div class="chart-card"><h4>输出 512×512（LR 128×128）</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">2 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:12.6%;background:#8b949e"></div></div><span class="bar-val">3 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:34.3%;background:#3b6fe0"></div></div><span class="bar-val">22 ms</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:63.1%;background:#8a5cd6"></div></div><span class="bar-val">248 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:63.9%;background:#2ea44f"></div></div><span class="bar-val">265 ms</span></div><div class="bar-row" title="服务端日志中位数"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#d97a2b"></div></div><span class="bar-val">5.70 s</span></div></div></div><div class="chart-card"><h4>输出 1920×1080</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">17 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:15.4%;background:#8b949e"></div></div><span class="bar-val">26 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:55.9%;background:#3b6fe0"></div></div><span class="bar-val">237 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:83.7%;background:#2ea44f"></div></div><span class="bar-val">1.08 s</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">2.63 s</span></div></div></div><div class="chart-card"><h4>输出 3840×2160</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">87 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:14.5%;background:#8b949e"></div></div><span class="bar-val">122 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:49.3%;background:#3b6fe0"></div></div><span class="bar-val">746 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:81.7%;background:#2ea44f"></div></div><span class="bar-val">4.02 s</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">10.43 s</span></div></div></div></div>
+    <p class="caveat">插值基线（双三次 / 双线性）是 CPU 上的 Pillow 调用，放进图里只是给个下界参考，不代表 GPU 上的插值开销。</p>
+  </section>
 
   <section class="realsr-sec" id="realsr">
     <h2>定量对比 · RealSRVal_crop128</h2>
@@ -227,8 +280,8 @@
             <td>1.78 s</td><td class="l dim">—</td><td>4.9 GiB</td></tr>
           <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">3840×2160 → 同尺寸（1×）</td>
             <td>4.02 s</td><td class="l dim">—</td><td>10.2 GiB</td></tr>
-          <tr><th class="l">双三次 / 双线性</th><td class="l dim">CPU</td><td class="l">128×128 → 512×512</td>
-            <td>≈ 1 ms</td><td class="l dim">Pillow 插值，无网络</td><td>—</td></tr>
+          <tr><th class="l">双三次 / 双线性</th><td class="l dim">CPU 单线程</td><td class="l">128×128 → 512×512</td>
+            <td>3.4 / 2.3 ms</td><td class="l dim">Pillow 插值，无网络；1080p 26 / 17 ms，4K 122 / 87 ms</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
@@ -237,19 +290,6 @@
       MiniMax 的数字取自服务端日志的 <code>Pixel data generated successfully</code>，含 6 步去噪与解码，不含网络往返，100 次请求的分布是 min 5.60 s / 中位 5.70 s / max 5.84 s，
       首次冷启动请求 200 s 已剔除。DLSS-NR 的开箱设置 <code>torch.compile</code> 在 CUDA 上会编错（输出对 NVIDIA 参考仅 21.5 dB，而 eager 路径是 33.78 dB、与 CPU 逐位一致），表中是 <code>DLSSNR_COMPILE=0</code> 的数字；
       它在 M4 Pro CPU 上做同样的事要慢约 8–9×（1080p 8.4 s、4K 35.9 s）。</p>
-  </section>
-
-  <section class="realsr-samples" id="realsr-samples">
-    <h2>RealSR 逐样本对比</h2>
-    <p class="lede">同一份测试集里的 10 个裁剪样本，八张图同步 3× 放大：鼠标移到任一图上，其余七张跟到同一位置。
-      LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照；
-      DLSS-NR 那一格是「双线性 4× 放大 → DLSS-NR 1×」的结果，规则与指标表一致。</p>
-    <div class="strip" id="rsStrip"></div>
-    <div class="stage-head">
-      <span class="stage-name" id="rsName"></span>
-      <span class="stage-meta" id="rsMeta"></span>
-    </div>
-    <div class="grid rs-grid" id="rsGrid"></div>
   </section>
 
   <section class="methods-sec">
