@@ -193,9 +193,40 @@
 <div class="wrap">
   <header>
     <h1>超分模型调研：指标、样本与推理速度</h1>
-    <p class="sub">五个方法（双线性 / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax）在同一份 RealSR 官方测试集上的
+    <p class="sub">六个方法（双线性 / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax）在同一份 RealSR 官方测试集上的
       定量指标、逐样本对比，以及 H800 上的实测推理速度。所有数字都是自己跑出来的，不是论文引用值。</p>
   </header>
+
+  <section class="methods-sec">
+    <h2>方法说明</h2>
+    <p class="lede">每个方法在做什么，按输入、输出与来源说明。点任意一张卡片看参数、权重体积与实测推理速度。</p>
+    <div class="methods">
+      <div class="method" data-method="lr">
+        <h3>LR<span>输入</span></h3>
+        <p>参考图 4× 下采样得到的低清图（如 3840×2560 → 960×640），是下面所有方法共同的起点。</p>
+      </div>
+      <div class="method" data-method="bicubic">
+        <h3>双三次<span>Bicubic</span></h3>
+        <p>Pillow 的双三次插值，把 LR 直接放大到参考尺寸。不做任何学习，作为插值基线；协议里另有一份双线性放大版本，同属基线。</p>
+      </div>
+      <div class="method is-ours" data-method="dlss">
+        <h3>DLSS-NR<span>DLSS 5</span></h3>
+        <p>NVIDIA 神经渲染网络的 PyTorch 复现，权重取自 <code>nvngx_dlssnr.dll</code> 310.9.16 的 preset 1（152 层）。只做 1×，输入是双线性放大图，输出与它同尺寸。</p>
+      </div>
+      <div class="method" data-method="tinysr">
+        <h3>TinySR<span>×4</span></h3>
+        <p>轻量级超分模型，官方权重。直接把 LR 作为输入，输出为参考尺寸的 4× 结果。</p>
+      </div>
+      <div class="method" data-method="sinsr">
+        <h3>SinSR<span>×4</span></h3>
+        <p>单步扩散式超分模型，官方权重。同样以 LR 为输入，一次前向输出 4× 结果。</p>
+      </div>
+      <div class="method" data-method="minimax">
+        <h3>MiniMax<span>生成式</span></h3>
+        <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
+      </div>
+    </div>
+  </section>
 
 
   <section class="realsr-samples" id="realsr-samples">
@@ -212,7 +243,6 @@
     </div>
     <div class="grid rs-grid" id="rsGrid"></div>
   </section>
-
 
   <section class="charts-sec" id="charts">
     <h2>指标可视化</h2>
@@ -245,7 +275,7 @@
           <tr><th class="l">DLSS-NR</th><td class="l dim">147.7 M</td><td>26.56</td><td>0.7426</td><td>0.4700</td><td>0.2720</td><td>9.83</td><td>24.57</td><td>0.3456</td><td>143.83</td></tr>
           <tr><th class="l">TinySR</th><td class="l dim">539.4 M</td><td>24.79</td><td>0.7171</td><td class="best">0.2806</td><td class="best">0.2123</td><td class="best">4.74</td><td class="best">69.78</td><td>0.6211</td><td class="best">118.16</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">174.7 M</td><td>26.25</td><td>0.7342</td><td>0.3198</td><td>0.2349</td><td>6.32</td><td>60.59</td><td>0.5420</td><td>137.92</td></tr>
-          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">67.1 B</td><td>19.59</td><td>0.5814</td><td>0.3867</td><td>0.2380</td><td>5.08</td><td>66.72</td><td class="best">0.6317</td><td>125.79</td></tr>
+          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">33.7 B</td><td>19.59</td><td>0.5814</td><td>0.3867</td><td>0.2380</td><td>5.08</td><td>66.72</td><td class="best">0.6317</td><td>125.79</td></tr>
         </tbody>
       </table>
     </div>
@@ -266,7 +296,8 @@
     </div>
     <p class="mtable-cap">TinySR (arXiv 2508.17434) Table, RealSR x4, Y channel。本页复现的 TinySR / SinSR 与论文报告值基本重合，说明测试集、权重与指标口径三者对得上。</p>
     <p class="caveat">口径说明：LPIPS / DISTS 逐图计算后取平均；NIQE / MUSIQ / MANIQA 同为逐图平均；FID 以整目录（100 张）作为一个集合计算，
-      因此 FID 的方差比逐图指标大得多，只适合看量级。PSNR / SSIM 的箭头方向是「越高越好」，LPIPS / DISTS / NIQE / FID 是「越低越好」。</p>
+      因此 FID 的方差比逐图指标大得多，只适合看量级。PSNR / SSIM 的箭头方向是「越高越好」，LPIPS / DISTS / NIQE / FID 是「越低越好」。
+      MiniMax 的参数量按 DiT（33.1 B）+ VAE（0.58 B）计，即 33.7 B；prompt 编码用的 Qwen3-VL 文本编码器（33.4 B，从 MiniMax-H3 仓库单独加载、可独立卸载）不在表内，计入后整条 pipeline 为 67.1 B。</p>
   </section>
 
   <section class="realsr-sec" id="srgd">
@@ -281,12 +312,13 @@
           <tr><th class="l">DLSS-NR</th><td class="l dim">147.7 M</td><td>25.87</td><td>0.8896</td><td>0.3645</td><td>0.2907</td><td>9.32</td><td>18.32</td><td>0.3488</td><td>109.37</td></tr>
           <tr><th class="l">TinySR</th><td class="l dim">539.4 M</td><td>25.52</td><td>0.8619</td><td>0.2863</td><td class="best">0.1413</td><td>4.63</td><td>46.50</td><td>0.4585</td><td>87.57</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">174.7 M</td><td>26.12</td><td>0.8830</td><td class="best">0.2781</td><td>0.1721</td><td>6.28</td><td>37.74</td><td>0.3980</td><td class="best">82.97</td></tr>
-          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">67.1 B</td><td>21.23</td><td>0.7965</td><td>0.3396</td><td>0.1727</td><td class="best">4.15</td><td class="best">47.75</td><td class="best">0.4728</td><td>96.47</td></tr>
+          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">33.7 B</td><td>21.23</td><td>0.7965</td><td>0.3396</td><td>0.1727</td><td class="best">4.15</td><td class="best">47.75</td><td class="best">0.4728</td><td>96.47</td></tr>
         </tbody>
       </table>
     </div>
     <p class="mtable-cap">80 对 · LR 480×270 → HR 1920×1080 · SRGD GameEngineData / SubwaySequencer · 单卡 H800 实跑</p>
-    <p class="caveat">两点口径：① 这组只有 80 对（SRGD 单场景 val 的全部），样本量小于 RealSR 的 100 对，单样本影响更大；FID 同样以整个目录（80 张）为一个集合计算。② SRGD 的 HR 是引擎渲染输出，几乎不含传感器噪声，而 RealSR 是相机实拍、带噪声与压缩痕迹，两者的难度构成不同，比较时看趋势而不是小数点。</p>
+    <p class="caveat">两点口径：① 这组只有 80 对（SRGD 单场景 val 的全部），样本量小于 RealSR 的 100 对，单样本影响更大；FID 同样以整个目录（80 张）为一个集合计算。② SRGD 的 HR 是引擎渲染输出，几乎不含传感器噪声，而 RealSR 是相机实拍、带噪声与压缩痕迹，两者的难度构成不同，比较时看趋势而不是小数点。
+③ 参数量口径同 RealSR 表：MiniMax 只计 DiT + VAE（33.7 B），文本编码器单列为 33.4 B。</p>
   </section>
 
   <section class="realsr-sec" id="speed">
@@ -330,37 +362,6 @@
       MiniMax 的数字取自服务端日志的 <code>Pixel data generated successfully</code>，含 6 步去噪与解码，不含网络往返，100 次请求的分布是 min 5.60 s / 中位 5.70 s / max 5.84 s，
       首次冷启动请求 200 s 已剔除。DLSS-NR 的开箱设置 <code>torch.compile</code> 在 CUDA 上会编错（输出对 NVIDIA 参考仅 21.5 dB，而 eager 路径是 33.78 dB、与 CPU 逐位一致），表中是 <code>DLSSNR_COMPILE=0</code> 的数字；
       它在 M4 Pro CPU 上做同样的事要慢约 8–9×（1080p 8.4 s、4K 35.9 s）。</p>
-  </section>
-
-  <section class="methods-sec">
-    <h2>方法说明</h2>
-    <p class="lede">每个方法在做什么，按输入、输出与来源说明。点任意一张卡片看参数、权重体积与实测推理速度。</p>
-    <div class="methods">
-      <div class="method" data-method="lr">
-        <h3>LR<span>输入</span></h3>
-        <p>参考图 4× 下采样得到的低清图（如 3840×2560 → 960×640），是下面所有方法共同的起点。</p>
-      </div>
-      <div class="method" data-method="bicubic">
-        <h3>双三次<span>Bicubic</span></h3>
-        <p>Pillow 的双三次插值，把 LR 直接放大到参考尺寸。不做任何学习，作为插值基线；协议里另有一份双线性放大版本，同属基线。</p>
-      </div>
-      <div class="method is-ours" data-method="dlss">
-        <h3>DLSS-NR<span>DLSS 5</span></h3>
-        <p>NVIDIA 神经渲染网络的 PyTorch 复现，权重取自 <code>nvngx_dlssnr.dll</code> 310.9.16 的 preset 1（152 层）。只做 1×，输入是双线性放大图，输出与它同尺寸。</p>
-      </div>
-      <div class="method" data-method="tinysr">
-        <h3>TinySR<span>×4</span></h3>
-        <p>轻量级超分模型，官方权重。直接把 LR 作为输入，输出为参考尺寸的 4× 结果。</p>
-      </div>
-      <div class="method" data-method="sinsr">
-        <h3>SinSR<span>×4</span></h3>
-        <p>单步扩散式超分模型，官方权重。同样以 LR 为输入，一次前向输出 4× 结果。</p>
-      </div>
-      <div class="method" data-method="minimax">
-        <h3>MiniMax<span>生成式</span></h3>
-        <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
-      </div>
-    </div>
   </section>
 
   <details class="why-sec" id="why-psnr">
@@ -744,11 +745,11 @@ const METHODS = {
   minimax: {
     title: "MiniMax H3-Image", tag: "生成式图像编辑",
     rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
-           ["参数量", "67.1 B（生成主干 33.1 B + 文本编码器 33.4 B + VAE 0.58 B）"],
+           ["参数量", "33.7 B（DiT 33.1 B + VAE 0.58 B；官方口径的 33 B 即 DiT 主干）。另计 Qwen3-VL 文本编码器 33.4 B，整条 pipeline 合计 67.1 B"],
            ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
            ["推理速度", "H800：128×128→512×512 <b>5.70 s</b>（100 次请求的服务器端中位数，min 5.60 / max 5.84）；大图 2976×1984–3433×5151 约 22.6–29.2 s"],
             ["推理开销", "6 步去噪占绝大部分，解码阶段仅 9.7 ms；峰值显存约 70 GB（单卡 H800）"],
-           ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重"]],
+           ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重。文本编码器从 MiniMax-H3 仓库单独加载、可独立卸载，所以峰值显存 ≈ 70 GB 对应的是 DiT+VAE，而不是 67 B 全量常驻"]],
     links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
   },
 };
