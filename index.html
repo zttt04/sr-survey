@@ -266,7 +266,7 @@
       各方法均直接使用官方发布权重，没有微调或重训。
       PSNR / SSIM 在 YCbCr 的 Y 通道上计算，与 TinySR、SinSR 论文口径一致；LPIPS / DISTS / NIQE / MUSIQ / MANIQA / FID 用 <code>pyiqa</code> 默认权重。
       DLSS-NR 这个网络只做 1×，不能吃 128×128 的 LR，所以它的输入是先双线性放大到 512×512 的图，输出同尺寸——这一行衡量的是「放大 + 增强」的组合，而不是真正的 4× 重建。
-      MiniMax 则是把原始 LR 和「目标 512×512」一起交给模型服务，放大在它内部完成（见下方注释）。</p>
+      MiniMax 则是把原始 LR 和「目标 512×512」一起交给模型服务，放大在它内部完成（LANCZOS，见方法卡片）；它也是唯一带<b>文本条件</b>的方法（固定英文指令经 Qwen3-VL 编码），这一点与其他几个无提示的方法并不完全对等。</p>
         <div class="mtable-wrap">
       <table class="mtable">
         <thead><tr><th class="l">方法</th><th class="l">参数量</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>DISTS ↓</th><th>NIQE ↓</th><th>MUSIQ ↑</th><th>MANIQA ↑</th><th>FID ↓</th></tr></thead>
