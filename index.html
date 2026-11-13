@@ -151,41 +151,32 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>逐样本超分对比</h1>
-    <p class="sub">同一张 LR，六种处理并排：LR / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax。
-      鼠标移到任一图上，六张同步放大到同一位置；点下方缩略图换样本。</p>
+    <h1>超分模型调研：指标、样本与推理速度</h1>
+    <p class="sub">五个方法（双线性 / 双三次 / DLSS-NR / TinySR / SinSR / MiniMax）在同一份 RealSR 官方测试集上的
+      定量指标、逐样本对比，以及 H800 上的实测推理速度。所有数字都是自己跑出来的，不是论文引用值。</p>
   </header>
-
-  <section>
-    <div class="strip" id="strip"></div>
-    <div class="stage-head">
-      <span class="stage-name" id="stageName"></span>
-      <span class="stage-meta" id="stageMeta"></span>
-    </div>
-    <div class="grid" id="grid"></div>
-    <div class="stats" id="stats"></div>
-  </section>
-
 
   <section class="realsr-sec" id="realsr">
     <h2>定量对比 · RealSRVal_crop128</h2>
     <p class="lede">100 个官方测试裁剪对：LR <span class="mono">128×128</span>，参考 <span class="mono">512×512</span>，固定 4×。
       数据取自 StableSR 官方测试集里的 <code>RealSRVal_crop128</code>（TinySR、SinSR 论文所用的同一份 RealSR 验证集），
       各方法均直接使用官方发布权重，没有微调或重训。
-      PSNR / SSIM 在 YCbCr 的 Y 通道上计算，与 TinySR、SinSR 论文口径一致；LPIPS / DISTS / NIQE / MUSIQ / MANIQA / FID 用 <code>pyiqa</code> 默认权重。</p>
+      PSNR / SSIM 在 YCbCr 的 Y 通道上计算，与 TinySR、SinSR 论文口径一致；LPIPS / DISTS / NIQE / MUSIQ / MANIQA / FID 用 <code>pyiqa</code> 默认权重。
+      DLSS-NR 这个网络只做 1×，不能吃 128×128 的 LR，所以它的输入是先双线性放大到 512×512 的图，输出同尺寸——这一行衡量的是「放大 + 增强」的组合，而不是真正的 4× 重建。</p>
         <div class="mtable-wrap">
       <table class="mtable">
         <thead><tr><th class="l">方法</th><th class="l">参数量</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>DISTS ↓</th><th>NIQE ↓</th><th>MUSIQ ↑</th><th>MANIQA ↑</th><th>FID ↓</th></tr></thead>
         <tbody>
           <tr><th class="l">双线性</th><td class="l dim">—</td><td>26.88</td><td>0.7457</td><td>0.4736</td><td>0.2718</td><td>10.64</td><td>24.83</td><td>0.3447</td><td>146.06</td></tr>
           <tr><th class="l">双三次</th><td class="l dim">—</td><td class="best">27.11</td><td class="best">0.7555</td><td>0.4564</td><td>0.2633</td><td>8.99</td><td>25.81</td><td>0.3529</td><td>140.84</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">147.7 M</td><td>26.56</td><td>0.7426</td><td>0.4700</td><td>0.2720</td><td>9.83</td><td>24.57</td><td>0.3456</td><td>143.83</td></tr>
           <tr><th class="l">TinySR</th><td class="l dim">539.4 M</td><td>24.79</td><td>0.7171</td><td class="best">0.2806</td><td class="best">0.2123</td><td class="best">4.74</td><td class="best">69.78</td><td>0.6211</td><td class="best">118.16</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">174.7 M</td><td>26.25</td><td>0.7342</td><td>0.3198</td><td>0.2349</td><td>6.32</td><td>60.59</td><td>0.5420</td><td>137.92</td></tr>
           <tr><th class="l">MiniMax H3-Image</th><td class="l dim">67.1 B</td><td>19.59</td><td>0.5814</td><td>0.3867</td><td>0.2380</td><td>5.08</td><td>66.72</td><td class="best">0.6317</td><td>125.79</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="mtable-cap">100 对 · LR 128×128 → HR 512×512 · 官方权重 · 2024-11 集群实测（H800）</p>
+    <p class="mtable-cap">100 对 · LR 128×128 → HR 512×512 · 官方权重 · 单卡 H800 实跑</p>
 
     <div class="mtable-wrap ref-table">
       <table class="mtable">
@@ -208,7 +199,7 @@
   <section class="realsr-sec" id="speed">
     <h2>推理速度 · 同机实测</h2>
     <p class="lede">每个数字都是同一台机器上跑出来的，不是论文里的引用值。GPU 为 <b>H800 80 GB</b>，fp16，batch = 1，预热 2 次后取 5 次的<b>中位数</b>；
-      计时不含读图、存图与色彩对齐（即模型本身的计算时间）。DLSS-NR 那几行是 M4 Pro CPU 上的 PyTorch 实现——它只有 CPU 版本，没法上 GPU 对比，这里如实标出。</p>
+      计时不含读图、存图与色彩对齐（即模型本身的计算时间）。DLSS-NR 是社区复现的 PyTorch 实现（eager 参考算术，显式关掉 torch.compile），含 152 层逐层 8-bit 舍入，所以比纯 GEMM 的实现慢。</p>
     <div class="mtable-wrap">
       <table class="mtable">
         <thead><tr><th class="l">模型</th><th class="l">设备</th><th class="l">输入 → 输出</th>
@@ -228,14 +219,14 @@
             <td>10.4 s</td><td class="l dim">15 块 × 616 ms</td><td>18.5 GB</td></tr>
           <tr><th class="l">MiniMax H3-Image</th><td class="l dim">H800</td><td class="l">128×128 → 512×512</td>
             <td>5.70 s</td><td class="l dim">6 步去噪 ≈ 5.7 s，解码 9.7 ms</td><td>≈ 70 GB</td></tr>
-          <tr><th class="l">DLSS-NR</th><td class="l dim">M4 Pro CPU</td><td class="l">929×530 → 同尺寸（1×）</td>
-            <td>3.3 s</td><td class="l dim">152 层，输入输出同分辨率</td><td>—</td></tr>
-          <tr><th class="l">DLSS-NR</th><td class="l dim">M4 Pro CPU</td><td class="l">1920×1080 → 同尺寸（1×）</td>
-            <td>8.4 s</td><td class="l dim">—</td><td>—</td></tr>
-          <tr><th class="l">DLSS-NR</th><td class="l dim">M4 Pro CPU</td><td class="l">2560×1440 → 同尺寸（1×）</td>
-            <td>13.8 s</td><td class="l dim">—</td><td>—</td></tr>
-          <tr><th class="l">DLSS-NR</th><td class="l dim">M4 Pro CPU</td><td class="l">3840×2160 → 同尺寸（1×）</td>
-            <td>35.9 s</td><td class="l dim">—</td><td>—</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">512×512 → 同尺寸（1×）</td>
+            <td>265 ms</td><td class="l dim">152 层，输入输出同分辨率</td><td>1.1 GiB</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">1920×1080 → 同尺寸（1×）</td>
+            <td>1.08 s</td><td class="l dim">—</td><td>3.0 GiB</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">2560×1440 → 同尺寸（1×）</td>
+            <td>1.78 s</td><td class="l dim">—</td><td>4.9 GiB</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">3840×2160 → 同尺寸（1×）</td>
+            <td>4.02 s</td><td class="l dim">—</td><td>10.2 GiB</td></tr>
           <tr><th class="l">双三次 / 双线性</th><td class="l dim">CPU</td><td class="l">128×128 → 512×512</td>
             <td>≈ 1 ms</td><td class="l dim">Pillow 插值，无网络</td><td>—</td></tr>
         </tbody>
@@ -244,13 +235,15 @@
     <p class="mtable-cap">同一 512×512 输出规格下：TinySR 21.5 ms，SinSR 248 ms（11.5×），MiniMax 5.70 s（265×）；到 4K 时差距同样维持（746 ms vs 10.4 s）。</p>
     <p class="caveat">几点口径说明：TinySR 的 1080p / 4K 与 SinSR 的全部规格都走各自官方的切块推理，块数与单块耗时列在「分段 / 开销」里，所以这两行不是单纯的 FLOPs 缩放；
       MiniMax 的数字取自服务端日志的 <code>Pixel data generated successfully</code>，含 6 步去噪与解码，不含网络往返，100 次请求的分布是 min 5.60 s / 中位 5.70 s / max 5.84 s，
-      首次冷启动请求 200 s 已剔除；DLSS-NR 是 CPU 上的单线程 PyTorch 复现，若换到 GPU 会快一到两个数量级，但目前没有可用的 CUDA 实现，所以只报 CPU 值。</p>
+      首次冷启动请求 200 s 已剔除。DLSS-NR 的开箱设置 <code>torch.compile</code> 在 CUDA 上会编错（输出对 NVIDIA 参考仅 21.5 dB，而 eager 路径是 33.78 dB、与 CPU 逐位一致），表中是 <code>DLSSNR_COMPILE=0</code> 的数字；
+      它在 M4 Pro CPU 上做同样的事要慢约 8–9×（1080p 8.4 s、4K 35.9 s）。</p>
   </section>
 
   <section class="realsr-samples" id="realsr-samples">
     <h2>RealSR 逐样本对比</h2>
-    <p class="lede">同一份测试集里的 10 个裁剪样本，七张图同步 3× 放大：鼠标移到任一图上，其余六张跟到同一位置。
-      LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照。</p>
+    <p class="lede">同一份测试集里的 10 个裁剪样本，八张图同步 3× 放大：鼠标移到任一图上，其余七张跟到同一位置。
+      LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照；
+      DLSS-NR 那一格是「双线性 4× 放大 → DLSS-NR 1×」的结果，规则与指标表一致。</p>
     <div class="strip" id="rsStrip"></div>
     <div class="stage-head">
       <span class="stage-name" id="rsName"></span>
@@ -261,7 +254,7 @@
 
   <section class="methods-sec">
     <h2>方法说明</h2>
-    <p class="lede">六格里的每一项在做什么，按输入输出与来源说明。</p>
+    <p class="lede">每个方法在做什么，按输入、输出与来源说明。点任意一张卡片看参数、权重体积与实测推理速度。</p>
     <div class="methods">
       <div class="method" data-method="lr">
         <h3>LR<span>输入</span></h3>
@@ -344,11 +337,11 @@
     </blockquote>
 
     <div class="takeaway">
-      <b>放回本页：</b>20 个样本上，双三次平均 PSNR 为 <span class="mono">28.83 dB</span>，
-      SinSR 27.50 dB、DLSS-NR 26.55 dB、TinySR 24.41 dB、MiniMax 20.40 dB；
-      其中 17/20 个样本是双三次最高。PSNR 只说明「像素平均误差小」，不说明「细节对」。
-      看这个页面时，建议把 PSNR 当作一个维度而不是排行榜：把鼠标移到图上，用 3× 放大对比边缘、纹理和文字，
-      再判断哪一张更接近参考图。
+      <b>放回本页：</b>100 对 RealSR 上，双三次平均 PSNR 为 <span class="mono">27.11 dB</span>，
+      双线性 26.88、DLSS-NR <span class="mono">26.56</span>、SinSR 26.25、TinySR 24.79、MiniMax 19.59 dB；
+      排序和感知指标几乎相反：LPIPS 最好的是 TinySR（0.281，双三次 0.456），DISTS 与 NIQE 也由 TinySR 拿下。
+      PSNR 只说明「像素平均误差小」，不说明「细节对」——把上面的逐样本区放大看边缘、砖缝、文字，
+      再判断哪一张更接近参考图，比看排行榜有用。
     </div>
 
     <p class="caveat">补充：PSNR 本身仍是有意义的——它衡量保真度，适合压缩、医学测量这类任务；只是对生成式超分，
@@ -367,971 +360,12 @@
   </div>
 
   <footer>
-    权重来自 NVIDIA <code>nvngx_dlssnr.dll</code>；样本来自 DLSSNR-RDNA3 验证集、Steam 商店截图、原神官方 press 截图与本机照片。
+    数据：StableSR 官方测试集 <code>RealSRVal_crop128</code>（100 对，LR 128×128 → HR 512×512）；
+    各方法均用官方权重。DLSS-NR 权重取自 NVIDIA <code>nvngx_dlssnr.dll</code> 310.9.16，指标与速度均为本机集群实跑。
   </footer>
 </div>
 
 <script>
-const SRB = [
-{
-"stem": "ac_odyssey",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 28.7,
-"ssim": 0.8278
-},
-"dlss": {
-"psnr": 27.47,
-"ssim": 0.9434
-},
-"sinsr": {
-"psnr": 28.34,
-"ssim": 0.8046
-},
-"tinysr": {
-"psnr": 25.59,
-"ssim": 0.7578
-},
-"minimax": {
-"psnr": 20.97,
-"ssim": 0.6707
-},
-"dlss_lr": {
-"psnr": 26.7,
-"ssim": 0.8109
-},
-"bicubic": {
-"psnr": 29.04,
-"ssim": 0.8374
-}
-}
-},
-{
-"stem": "ac_origins",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 24.62,
-"ssim": 0.6924
-},
-"dlss": {
-"psnr": 26.85,
-"ssim": 0.9655
-},
-"sinsr": {
-"psnr": 24.3,
-"ssim": 0.6795
-},
-"tinysr": {
-"psnr": 21.37,
-"ssim": 0.588
-},
-"minimax": {
-"psnr": 16.72,
-"ssim": 0.4358
-},
-"dlss_lr": {
-"psnr": 23.94,
-"ssim": 0.7028
-},
-"bicubic": {
-"psnr": 25.06,
-"ssim": 0.7152
-}
-}
-},
-{
-"stem": "ac_valhalla",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 25.83,
-"ssim": 0.7856
-},
-"dlss": {
-"psnr": 27.14,
-"ssim": 0.9428
-},
-"sinsr": {
-"psnr": 26.06,
-"ssim": 0.767
-},
-"tinysr": {
-"psnr": 23.65,
-"ssim": 0.7083
-},
-"minimax": {
-"psnr": 17.13,
-"ssim": 0.5581
-},
-"dlss_lr": {
-"psnr": 25.15,
-"ssim": 0.7678
-},
-"bicubic": {
-"psnr": 26.22,
-"ssim": 0.7981
-}
-}
-},
-{
-"stem": "cyberpunk",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 28.32,
-"ssim": 0.9044
-},
-"dlss": {
-"psnr": 30.21,
-"ssim": 0.9807
-},
-"sinsr": {
-"psnr": 29.01,
-"ssim": 0.8944
-},
-"tinysr": {
-"psnr": 27.14,
-"ssim": 0.8883
-},
-"minimax": {
-"psnr": 21.02,
-"ssim": 0.7912
-},
-"dlss_lr": {
-"psnr": 27.62,
-"ssim": 0.9016
-},
-"bicubic": {
-"psnr": 28.63,
-"ssim": 0.908
-}
-}
-},
-{
-"stem": "genshin_1",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 27.6,
-"ssim": 0.7763
-},
-"dlss": {
-"psnr": 26.19,
-"ssim": 0.9694
-},
-"sinsr": {
-"psnr": 27.43,
-"ssim": 0.7614
-},
-"tinysr": {
-"psnr": 23.62,
-"ssim": 0.6634
-},
-"minimax": {
-"psnr": 18.99,
-"ssim": 0.5365
-},
-"dlss_lr": {
-"psnr": 25.81,
-"ssim": 0.7773
-},
-"bicubic": {
-"psnr": 28.09,
-"ssim": 0.7912
-}
-}
-},
-{
-"stem": "genshin_2",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 28.14,
-"ssim": 0.8099
-},
-"dlss": {
-"psnr": 26.98,
-"ssim": 0.9679
-},
-"sinsr": {
-"psnr": 27.4,
-"ssim": 0.7665
-},
-"tinysr": {
-"psnr": 24.35,
-"ssim": 0.662
-},
-"dlss_lr": {
-"psnr": 25.96,
-"ssim": 0.8037
-},
-"bicubic": {
-"psnr": 28.54,
-"ssim": 0.8217
-}
-}
-},
-{
-"stem": "genshin_3",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": 8.01,
-"scores": {
-"bilinear": {
-"psnr": 28.81,
-"ssim": 0.842
-},
-"dlss": {
-"psnr": 29.16,
-"ssim": 0.9762
-},
-"sinsr": {
-"psnr": 28.76,
-"ssim": 0.8135
-},
-"tinysr": {
-"psnr": 25.99,
-"ssim": 0.7361
-},
-"minimax": {
-"psnr": 19.56,
-"ssim": 0.6306
-},
-"dlss_lr": {
-"psnr": 27.4,
-"ssim": 0.8404
-},
-"bicubic": {
-"psnr": 29.33,
-"ssim": 0.8532
-}
-}
-},
-{
-"stem": "photo_1",
-"strict": false,
-"width": 929,
-"height": 530,
-"seconds": 2.18,
-"scores": {
-"bilinear": {
-"psnr": 28.08,
-"ssim": 0.8275
-},
-"dlss": {
-"psnr": 32.97,
-"ssim": 0.9929
-},
-"sinsr": {
-"psnr": 26.17,
-"ssim": 0.7749
-},
-"tinysr": {
-"psnr": 23.31,
-"ssim": 0.7126
-},
-"minimax": {
-"psnr": 19.2,
-"ssim": 0.5714
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 27.25,
-"ssim": 0.8286
-},
-"bicubic": {
-"psnr": 28.52,
-"ssim": 0.839
-}
-}
-},
-{
-"stem": "photo_2",
-"strict": false,
-"width": 929,
-"height": 530,
-"seconds": 2.02,
-"scores": {
-"bilinear": {
-"psnr": 28.73,
-"ssim": 0.8275
-},
-"dlss": {
-"psnr": 32.17,
-"ssim": 0.9905
-},
-"sinsr": {
-"psnr": 26.9,
-"ssim": 0.7749
-},
-"tinysr": {
-"psnr": 23.67,
-"ssim": 0.6988
-},
-"minimax": {
-"psnr": 19.84,
-"ssim": 0.6029
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 27.59,
-"ssim": 0.8288
-},
-"bicubic": {
-"psnr": 29.23,
-"ssim": 0.8392
-}
-}
-},
-{
-"stem": "photo_3",
-"strict": false,
-"width": 929,
-"height": 530,
-"seconds": 2.08,
-"scores": {
-"bilinear": {
-"psnr": 26.11,
-"ssim": 0.6949
-},
-"dlss": {
-"psnr": 31.49,
-"ssim": 0.9879
-},
-"sinsr": {
-"psnr": 25.42,
-"ssim": 0.6671
-},
-"tinysr": {
-"psnr": 22.77,
-"ssim": 0.5725
-},
-"minimax": {
-"psnr": 19.54,
-"ssim": 0.5137
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 25.19,
-"ssim": 0.6961
-},
-"bicubic": {
-"psnr": 26.47,
-"ssim": 0.7086
-}
-}
-},
-{
-"stem": "photo_4",
-"strict": false,
-"width": 943,
-"height": 532,
-"seconds": 2.22,
-"scores": {
-"bilinear": {
-"psnr": 25.78,
-"ssim": 0.7576
-},
-"dlss": {
-"psnr": 28.23,
-"ssim": 0.9811
-},
-"sinsr": {
-"psnr": 23.37,
-"ssim": 0.683
-},
-"tinysr": {
-"psnr": 20.85,
-"ssim": 0.5821
-},
-"minimax": {
-"psnr": 15.53,
-"ssim": 0.3456
-},
-"dlss_lr": {
-"psnr": 24.98,
-"ssim": 0.7585
-},
-"bicubic": {
-"psnr": 26.33,
-"ssim": 0.781
-}
-}
-},
-{
-"stem": "photo_5",
-"strict": false,
-"width": 943,
-"height": 532,
-"seconds": 2.02,
-"scores": {
-"bilinear": {
-"psnr": 26.32,
-"ssim": 0.7617
-},
-"dlss": {
-"psnr": 27.59,
-"ssim": 0.9766
-},
-"sinsr": {
-"psnr": 24.13,
-"ssim": 0.6863
-},
-"tinysr": {
-"psnr": 21.13,
-"ssim": 0.5854
-},
-"minimax": {
-"psnr": 15.81,
-"ssim": 0.361
-},
-"dlss_lr": {
-"psnr": 25.56,
-"ssim": 0.7634
-},
-"bicubic": {
-"psnr": 26.91,
-"ssim": 0.7844
-}
-}
-},
-{
-"stem": "photo_6",
-"strict": false,
-"width": 943,
-"height": 532,
-"seconds": 2.06,
-"scores": {
-"bilinear": {
-"psnr": 21.98,
-"ssim": 0.6327
-},
-"dlss": {
-"psnr": 26.57,
-"ssim": 0.9668
-},
-"sinsr": {
-"psnr": 21.41,
-"ssim": 0.6235
-},
-"tinysr": {
-"psnr": 19.59,
-"ssim": 0.5562
-},
-"minimax": {
-"psnr": 14.54,
-"ssim": 0.3046
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 21.41,
-"ssim": 0.6378
-},
-"bicubic": {
-"psnr": 22.3,
-"ssim": 0.6566
-}
-}
-},
-{
-"stem": "tomb_1080",
-"strict": true,
-"width": 1920,
-"height": 1080,
-"seconds": 7.8,
-"scores": {
-"bilinear": {
-"psnr": 27.09,
-"ssim": 0.7445
-},
-"dlss": {
-"psnr": 26.43,
-"ssim": 0.9623
-},
-"sinsr": {
-"psnr": 27.18,
-"ssim": 0.7334
-},
-"tinysr": {
-"psnr": 24.26,
-"ssim": 0.6513
-},
-"minimax": {
-"psnr": 18.39,
-"ssim": 0.4944
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 25.42,
-"ssim": 0.7422
-},
-"bicubic": {
-"psnr": 27.5,
-"ssim": 0.7589
-}
-}
-},
-{
-"stem": "tomb_1440",
-"strict": true,
-"width": 2560,
-"height": 1440,
-"seconds": 15.39,
-"scores": {
-"bilinear": {
-"psnr": 27.83,
-"ssim": 0.7627
-},
-"dlss": {
-"psnr": 27.71,
-"ssim": 0.9683
-},
-"sinsr": {
-"psnr": 26.95,
-"ssim": 0.7162
-},
-"tinysr": {
-"psnr": 24.64,
-"ssim": 0.6529
-},
-"minimax": {
-"psnr": 24.78,
-"ssim": 0.6903
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 26.23,
-"ssim": 0.7603
-},
-"bicubic": {
-"psnr": 28.26,
-"ssim": 0.7769
-}
-}
-},
-{
-"stem": "tomb_2160",
-"strict": true,
-"width": 3840,
-"height": 2160,
-"seconds": 40.21,
-"scores": {
-"bilinear": {
-"psnr": 29.02,
-"ssim": 0.7956
-},
-"dlss": {
-"psnr": 28.69,
-"ssim": 0.9728
-},
-"sinsr": {
-"psnr": 27.68,
-"ssim": 0.7369
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 27.39,
-"ssim": 0.7934
-},
-"bicubic": {
-"psnr": 29.5,
-"ssim": 0.8095
-}
-}
-},
-{
-"stem": "witcher3",
-"strict": false,
-"width": 1920,
-"height": 1080,
-"seconds": 10.02,
-"scores": {
-"bilinear": {
-"psnr": 35.77,
-"ssim": 0.9092
-},
-"dlss": {
-"psnr": 29.21,
-"ssim": 0.9051
-},
-"tinysr": {
-"psnr": 32.07,
-"ssim": 0.8135
-},
-"gt": {
-"psnr": Infinity,
-"ssim": 1.0
-},
-"dlss_lr": {
-"psnr": 29.21,
-"ssim": 0.845
-},
-"bicubic": {
-"psnr": 36.3,
-"ssim": 0.9152
-}
-}
-},
-{
-"stem": "extra_1_portrait",
-"strict": false,
-"width": 3433,
-"height": 5151,
-"seconds": NaN,
-"scores": {
-"bilinear": {
-"psnr": 30.13,
-"ssim": 0.8424
-},
-"sinsr": {
-"psnr": 29.76,
-"ssim": 0.8336
-},
-"tinysr": {
-"psnr": 23.8,
-"ssim": 0.6988
-},
-"minimax": {
-"psnr": 24.65,
-"ssim": 0.7628
-},
-"bicubic": {
-"psnr": 30.4,
-"ssim": 0.8503
-},
-"dlss_lr": {
-"psnr": 27.77,
-"ssim": 0.8321
-}
-},
-"extra": true
-},
-{
-"stem": "extra_2_portrait_cc0",
-"strict": false,
-"width": 3840,
-"height": 2560,
-"seconds": 40.81,
-"scores": {
-"bilinear": {
-"psnr": 26.62,
-"ssim": 0.6835
-},
-"sinsr": {
-"psnr": 27.69,
-"ssim": 0.6987
-},
-"tinysr": {
-"psnr": 24.15,
-"ssim": 0.5947
-},
-"minimax": {
-"psnr": 23.07,
-"ssim": 0.6144
-},
-"bicubic": {
-"psnr": 27.1,
-"ssim": 0.6953
-},
-"dlss_lr": {
-"psnr": 25.12,
-"ssim": 0.6814
-}
-},
-"extra": true
-},
-{
-"stem": "extra_3_dog",
-"strict": false,
-"width": 2976,
-"height": 1984,
-"seconds": 21.5,
-"scores": {
-"bilinear": {
-"psnr": 37.18,
-"ssim": 0.9358
-},
-"sinsr": {
-"psnr": 34.65,
-"ssim": 0.9156
-},
-"tinysr": {
-"psnr": 26.74,
-"ssim": 0.6876
-},
-"minimax": {
-"psnr": 30.33,
-"ssim": 0.8879
-},
-"bicubic": {
-"psnr": 38.19,
-"ssim": 0.942
-},
-"dlss_lr": {
-"psnr": 32.76,
-"ssim": 0.9332
-}
-},
-"extra": true
-},
-{
-"stem": "extra_4_cat",
-"strict": false,
-"width": 3840,
-"height": 2442,
-"seconds": 34.83,
-"scores": {
-"bilinear": {
-"psnr": 34.03,
-"ssim": 0.8173
-},
-"sinsr": {
-"psnr": 32.81,
-"ssim": 0.8033
-},
-"tinysr": {
-"psnr": 30.87,
-"ssim": 0.7787
-},
-"minimax": {
-"psnr": 24.86,
-"ssim": 0.7502
-},
-"bicubic": {
-"psnr": 34.35,
-"ssim": 0.8212
-},
-"dlss_lr": {
-"psnr": 32.89,
-"ssim": 0.8174
-}
-},
-"extra": true
-},
-{
-"stem": "extra_5_car",
-"strict": false,
-"width": 3840,
-"height": 2560,
-"seconds": 46.17,
-"scores": {
-"bilinear": {
-"psnr": 20.35,
-"ssim": 0.639
-},
-"sinsr": {
-"psnr": 21.26,
-"ssim": 0.6777
-},
-"tinysr": {
-"psnr": 19.6,
-"ssim": 0.5463
-},
-"minimax": {
-"psnr": 15.94,
-"ssim": 0.4085
-},
-"bicubic": {
-"psnr": 20.91,
-"ssim": 0.6743
-},
-"dlss_lr": {
-"psnr": 20.24,
-"ssim": 0.6423
-}
-},
-"extra": true
-},
-{
-"stem": "extra_6_still_life",
-"strict": false,
-"width": 3840,
-"height": 2560,
-"seconds": 40.48,
-"scores": {
-"bilinear": {
-"psnr": 43.24,
-"ssim": 0.9716
-},
-"sinsr": {
-"psnr": 38.48,
-"ssim": 0.9515
-},
-"tinysr": {
-"psnr": 35.5,
-"ssim": 0.9224
-},
-"minimax": {
-"psnr": 27.12,
-"ssim": 0.9059
-},
-"bicubic": {
-"psnr": 43.85,
-"ssim": 0.9729
-},
-"dlss_lr": {
-"psnr": 31.97,
-"ssim": 0.9039
-}
-},
-"extra": true
-}
-];
-
-const TILES = [
-  ["lr", "LR", false],
-  ["bicubic", "双三次", false],
-  ["dlss_lr", "DLSS-NR", true],
-  ["tinysr", "TinySR", false],
-  ["sinsr", "SinSR", false],
-  ["minimax", "MiniMax", false],
-];
-const NEEDED = ["bicubic", "dlss_lr", "tinysr", "sinsr", "minimax"];
-const LABEL = {
-  tomb_1080: "Tomb Raider 2013 · 1080p", tomb_1440: "Tomb Raider 2013 · 1440p",
-  tomb_2160: "Tomb Raider 2013 · 4K", witcher3: "The Witcher 3",
-  ac_origins: "Assassin's Creed Origins", ac_odyssey: "Assassin's Creed Odyssey",
-  ac_valhalla: "Assassin's Creed Valhalla", cyberpunk: "Cyberpunk 2077",
-  genshin_1: "原神 · 须弥城", genshin_2: "原神 · 雨林", genshin_3: "原神 · 营地",
-  photo_1: "实景照片 1", photo_2: "实景照片 2", photo_3: "实景照片 3",
-  photo_4: "实景照片 4", photo_5: "实景照片 5", photo_6: "实景照片 6",
-  extra_1_portrait: "人像 · 竖构图", extra_2_portrait_cc0: "人像 · CC0",
-  extra_3_dog: "dog", extra_4_cat: "cat", extra_5_car: "car", extra_6_still_life: "still life",
-};
-
-const complete = SRB.filter(r => NEEDED.every(k => r.scores[k] && isFinite(r.scores[k].psnr)));
-
-/* 参考尺寸与 LR 尺寸的范围，用于弹窗标注 */
-const _sizes = SRB.map(r => [r.width, r.height]);
-const _min = _sizes.reduce((a, b) => (b[0] * b[1] < a[0] * a[1] ? b : a));
-const _max = _sizes.reduce((a, b) => (b[0] * b[1] > a[0] * a[1] ? b : a));
-const REF_RANGE = `${_min[0]}×${_min[1]} … ${_max[0]}×${_max[1]}`;
-const LR_RANGE = `${Math.floor(_min[0] / 4)}×${Math.floor(_min[1] / 4)} … ${Math.floor(_max[0] / 4)}×${Math.floor(_max[1] / 4)}`;
-let current = (new URLSearchParams(location.search).get("s")) || complete[0].stem;
-if (!complete.some(r => r.stem === current)) current = complete[0].stem;
-
-function buildStrip(){
-  const strip = document.getElementById("strip");
-  strip.innerHTML = "";
-  complete.forEach(row => {
-    const b = document.createElement("button");
-    b.className = "thumb" + (row.stem === current ? " on" : "");
-    b.title = LABEL[row.stem] || row.stem;
-    b.innerHTML = `<img src="media/bm_${row.stem}.bicubic.jpg" alt="${b.title}" loading="lazy">`;
-    b.onclick = () => { current = row.stem; render(); };
-
-    strip.appendChild(b);
-  });
-}
-
-function render(){
-  const row = complete.find(r => r.stem === current);
-  const refSize = `${row.width}×${row.height}`;
-  const lrW = Math.floor(row.width / 4), lrH = Math.floor(row.height / 4);
-  document.getElementById("stageName").textContent = LABEL[row.stem] || row.stem;
-  document.getElementById("stageMeta").textContent = `LR ${lrW}×${lrH} → 参考 ${refSize}`;
-
-  const grid = document.getElementById("grid");
-  grid.innerHTML = TILES.map(([key, name, ours]) => `
-    <div class="col${ours ? " is-ours" : ""}">
-      <div class="img-wrap" data-key="${key}">
-        <img src="media/bm_${row.stem}.${key}.jpg" alt="${name}"
-             data-size="${key === "lr" ? `${lrW}×${lrH}` : refSize}">
-        <div class="lens"></div><div class="dot"></div>
-      </div>
-      <div class="col-label">${name}</div>
-    </div>`).join("");
-
-  document.getElementById("stats").innerHTML =
-    [["bicubic","双三次"],["dlss_lr","DLSS-NR"],["tinysr","TinySR"],["sinsr","SinSR"],["minimax","MiniMax"]]
-      .map(([k, n]) => `${n} <b>${row.scores[k].psnr.toFixed(2)}</b> dB`).join(" · ") +
-    ` <span style="color:#9ca3af">（对参考图，越高越好 ·
-       <a href="#why-psnr" style="color:inherit;text-decoration:underline;text-underline-offset:2px">PSNR 高 ≠ 更清晰</a>）</span>`;
-
-  initLens(grid);
-  buildStrip();
-}
-
-let bound = false;
-function initLens(grid){
-  const hosts = [...grid.querySelectorAll(".img-wrap")];
-  const show = (px, py) => {
-    for (const host of hosts){
-      const w = host.clientWidth, h = host.clientHeight;
-      const lens = host.querySelector(".lens"), dot = host.querySelector(".dot");
-      const size = lens.offsetWidth;
-      if (!w || !h || !size) continue;
-      const ZOOM = 3;
-      lens.style.backgroundImage = `url("${host.querySelector("img").src}")`;
-      lens.style.backgroundSize = `${w * ZOOM}px ${h * ZOOM}px`;
-      lens.style.backgroundPosition = `${-(px * w * ZOOM - size / 2)}px ${-(py * h * ZOOM - size / 2)}px`;
-      let lx = px * w + 10, ly = py * h + 10;
-      if (lx + size > w) lx = px * w - 10 - size;
-      if (ly + size > h) ly = py * h - 10 - size;
-      lens.style.transform = `translate(${Math.max(0, Math.min(w - size, lx))}px, ${Math.max(0, Math.min(h - size, ly))}px)`;
-      lens.style.opacity = 1;
-      dot.style.transform = `translate(${px * w}px, ${py * h}px)`;
-      dot.style.opacity = 1;
-    }
-  };
-  const hide = () => hosts.forEach(h => {
-    h.querySelector(".lens").style.opacity = 0;
-    h.querySelector(".dot").style.opacity = 0;
-  });
-  hosts.forEach(host => {
-    host.onpointermove = e => {
-      const r = host.getBoundingClientRect();
-      show(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
-           Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
-    };
-    host.onpointerleave = hide;
-  });
-}
-
-render();
-
 /* ---------- RealSR 逐样本对比 ---------- */
 const RS_SAMPLES = [
 {
@@ -1377,8 +411,9 @@ const RS_SAMPLES = [
 ];
 const RS_TILES = [
   ["lr", "LR（输入）", "128×128"],
-  ["base_bicubic", "双三次", "512×512"],
   ["base_bilinear", "双线性", "512×512"],
+  ["base_bicubic", "双三次", "512×512"],
+  ["dlssnr", "DLSS-NR", "512×512"],
   ["tinysr", "TinySR", "512×512"],
   ["sinsr", "SinSR", "512×512"],
   ["minimax", "MiniMax", "512×512"],
@@ -1426,28 +461,30 @@ rsRender();
 const METHODS = {
   lr: {
     title: "LR（输入）", tag: "低分辨率输入",
-    rows: [["尺寸", `${LR_RANGE}（参考图的 1/4 边长）`], ["参数量", "0"]],
+    rows: [["尺寸", "RealSR 的 LR 128×128；主对比样本为原生分辨率帧"], ["参数量", "0"]],
     links: [],
     note: "",
   },
   bicubic: {
     title: "双三次插值", tag: "Bicubic baseline",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+    rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "0"], ["实现", "Pillow BICUBIC"]],
     links: [],
   },
   dlss: {
     title: "DLSS-NR（DLSS 5）", tag: "神经渲染后处理 · 1×",
-    rows: [["输入", `双线性放大图，${REF_RANGE}`], ["输出", "与输入同尺寸"],
+    rows: [["输入", "双线性 4× 放大图，与输出同尺寸"], ["输出", "与输入同尺寸（1×）"],
            ["参数量", "147.7 M"], ["权重体积", "147 MB（weights.safetensors）"],
-           ["推理速度", "输入=输出（1×）：929×530 → 3.3 s · 1920×1080 → 8.4 s · 2560×1440 → 13.8 s · 3840×2160 → 35.9 s（M4 Pro CPU，单线程 PyTorch；该仓库只有 CPU 实现，没有 CUDA 版本）"],
-           ["结构", "152 层，preset 1"], ["运行", "PyTorch · CPU"]],
+           ["推理速度", "H800（eager 参考算术）：512×512 <b>265 ms</b> · 1920×1080 <b>1.08 s</b> · 2560×1440 <b>1.78 s</b> · 3840×2160 <b>4.02 s</b>；峰值显存 1.1 / 3.0 / 4.9 / 10.2 GiB"],
+           ["CPU 对照", "同一网络在 M4 Pro 单线程：1080p 8.4 s、4K 35.9 s，即 H800 快约 8–9×"],
+           ["结构", "152 层，preset 1"],
+           ["运行", "PyTorch；<code>DLSSNR_COMPILE=0</code> 必须开——torch.compile 在 CUDA 上会编错，输出对 NVIDIA 参考只有 21.5 dB，eager 路径与 CPU 结果逐位一致"]],
     links: [["复现仓库", "https://github.com/mauri870/dlssnr-pytorch"],
             ["验证样本", "https://github.com/mauri870/DLSSNR-RDNA3"]],
   },
   tinysr: {
     title: "TinySR", tag: "剪枝扩散 · ×4",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+    rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "539.4 M（脚本加载实测；权重文件合计 611.7 M，含未被加载的层）"],
            ["权重体积", "1.5 GB"],
            ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>21.5 ms</b>；480×270→1920×1080 <b>237 ms</b>；960×540→3840×2160 <b>746 ms</b>（分段见下表）"],
@@ -1458,7 +495,7 @@ const METHODS = {
   },
   sinsr: {
     title: "SinSR", tag: "单步扩散超分 · ×4",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
+    rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "174.7 M（SinSR_v1 119.4 M + VAE 55.3 M）"],
            ["权重体积", "765 MB"],
            ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>248 ms</b>；480×270→1920×1080 <b>2.63 s</b>；960×540→3840×2160 <b>10.4 s</b>"],
@@ -1469,7 +506,7 @@ const METHODS = {
   },
   minimax: {
     title: "MiniMax H3-Image", tag: "生成式图像编辑",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
+    rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "67.1 B（生成主干 33.1 B + 文本编码器 33.4 B + VAE 0.58 B）"],
            ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
            ["推理速度", "H800：128×128→512×512 <b>5.70 s</b>（100 次请求的服务器端中位数，min 5.60 / max 5.84）；大图 2976×1984–3433×5151 约 22.6–29.2 s"],
