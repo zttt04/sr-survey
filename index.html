@@ -277,8 +277,11 @@
     </div>
 
     <figure class="paper-fig">
-      <a href="media/zoomldm-table3.webp" target="_blank" rel="noopener" title="点击查看原图">
+      <a href="media/zoomldm-table3.webp" target="_blank" rel="noopener" title="点击查看原图"
+         onerror="this.href='zoomldm-table3.webp'">
         <img src="media/zoomldm-table3.webp" width="1998" height="532"
+             data-fb="zoomldm-table3.webp"
+             onerror="this.onerror=null;this.src=this.dataset.fb"
              alt="ZoomLDM 论文 Table 3：TCGA-BRCA 与 BACH 上的超分结果。双三次的 SSIM、PSNR 最高，ZoomLDM 的 LPIPS、CONCH 等感知指标更好。">
       </a>
       <figcaption>
@@ -1349,7 +1352,8 @@ function buildRsStrip(){
     const b = document.createElement("button");
     b.className = "thumb" + (row.stem === rsCurrent ? " on" : "");
     b.title = row.label;
-    b.innerHTML = `<img src="media/realsr/${row.stem}__hr.jpg" alt="${row.label}" loading="lazy">`;
+    b.innerHTML = `<img src="media/realsr/${row.stem}__hr.jpg" data-fb="${row.stem}__hr.jpg"
+      onerror="this.onerror=null;this.src=this.dataset.fb" alt="${row.label}" loading="lazy">`;
     b.onclick = () => { rsCurrent = row.stem; rsRender(); };
     strip.appendChild(b);
   });
@@ -1365,7 +1369,8 @@ function rsRender(){
   grid.innerHTML = RS_TILES.map(([key, name, size]) => `
     <div class="col">
       <div class="img-wrap" data-key="${key}">
-        <img src="media/realsr/${row.stem}__${key}.jpg" alt="${name}" data-size="${size}">
+        <img src="media/realsr/${row.stem}__${key}.jpg" data-fb="${row.stem}__${key}.jpg"
+             onerror="this.onerror=null;this.src=this.dataset.fb" alt="${name}" data-size="${size}">
         <div class="lens"></div><div class="dot"></div>
       </div>
       <div class="col-label">${name}<span class="dim">${size}</span></div>
