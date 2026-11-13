@@ -32,6 +32,8 @@
   .thumb img{display:block;width:100%;height:100%;object-fit:cover}
   .thumb:hover{border-color:#c9d3dd}
   .thumb.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .thumb--game{border-color:#cfe0f7}
+  .thumb--game.on{border-color:#3b6fe0;box-shadow:0 0 0 2px #e8f0fd}
 
   /* 3x2 comparison grid */
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -195,36 +197,6 @@
       定量指标、逐样本对比，以及 H800 上的实测推理速度。所有数字都是自己跑出来的，不是论文引用值。</p>
   </header>
 
-  <section class="methods-sec">
-    <h2>方法说明</h2>
-    <p class="lede">每个方法在做什么，按输入、输出与来源说明。点任意一张卡片看参数、权重体积与实测推理速度。</p>
-    <div class="methods">
-      <div class="method" data-method="lr">
-        <h3>LR<span>输入</span></h3>
-        <p>参考图 4× 下采样得到的低清图（如 3840×2560 → 960×640），是下面所有方法共同的起点。</p>
-      </div>
-      <div class="method" data-method="bicubic">
-        <h3>双三次<span>Bicubic</span></h3>
-        <p>Pillow 的双三次插值，把 LR 直接放大到参考尺寸。不做任何学习，作为插值基线；协议里另有一份双线性放大版本，同属基线。</p>
-      </div>
-      <div class="method is-ours" data-method="dlss">
-        <h3>DLSS-NR<span>DLSS 5</span></h3>
-        <p>NVIDIA 神经渲染网络的 PyTorch 复现，权重取自 <code>nvngx_dlssnr.dll</code> 310.9.16 的 preset 1（152 层）。只做 1×，输入是双线性放大图，输出与它同尺寸。</p>
-      </div>
-      <div class="method" data-method="tinysr">
-        <h3>TinySR<span>×4</span></h3>
-        <p>轻量级超分模型，官方权重。直接把 LR 作为输入，输出为参考尺寸的 4× 结果。</p>
-      </div>
-      <div class="method" data-method="sinsr">
-        <h3>SinSR<span>×4</span></h3>
-        <p>单步扩散式超分模型，官方权重。同样以 LR 为输入，一次前向输出 4× 结果。</p>
-      </div>
-      <div class="method" data-method="minimax">
-        <h3>MiniMax<span>生成式</span></h3>
-        <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
-      </div>
-    </div>
-  </section>
 
   <section class="realsr-samples" id="realsr-samples">
     <h2>逐样本交互对比</h2>
@@ -252,7 +224,7 @@
     <p class="lede">三档输出规格下的端到端延迟，<b>对数刻度</b>（否则 21 ms 和 5.7 s 放在一起没法看）。
       柱长代表 log10(耗时的相对位置)，右侧标注真实耗时。TinySR、SinSR 走各自的切块推理，
       DLSS-NR 是 1× 网络，耗时对应「同尺寸输入」。</p>
-    <div class="speed-charts"><div class="chart-card"><h4>输出 512×512（LR 128×128）</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">2 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:12.6%;background:#8b949e"></div></div><span class="bar-val">3 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:34.3%;background:#3b6fe0"></div></div><span class="bar-val">22 ms</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:63.1%;background:#8a5cd6"></div></div><span class="bar-val">248 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:63.9%;background:#2ea44f"></div></div><span class="bar-val">265 ms</span></div><div class="bar-row" title="服务端日志中位数"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#d97a2b"></div></div><span class="bar-val">5.70 s</span></div></div></div><div class="chart-card"><h4>输出 1920×1080</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">17 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:15.4%;background:#8b949e"></div></div><span class="bar-val">26 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:55.9%;background:#3b6fe0"></div></div><span class="bar-val">237 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:83.7%;background:#2ea44f"></div></div><span class="bar-val">1.08 s</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">2.63 s</span></div></div></div><div class="chart-card"><h4>输出 3840×2160</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">87 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:14.5%;background:#8b949e"></div></div><span class="bar-val">122 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:49.3%;background:#3b6fe0"></div></div><span class="bar-val">746 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:81.7%;background:#2ea44f"></div></div><span class="bar-val">4.02 s</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">10.43 s</span></div></div></div></div>
+    <div class="speed-charts"><div class="chart-card"><h4>输出 512×512（LR 128×128）</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">2 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:12.6%;background:#8b949e"></div></div><span class="bar-val">3 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:28.0%;background:#3b6fe0"></div></div><span class="bar-val">13 ms</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:50.3%;background:#8a5cd6"></div></div><span class="bar-val">84 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:54.0%;background:#2ea44f"></div></div><span class="bar-val">115 ms</span></div><div class="bar-row" title="服务端日志中位数"><span class="bar-name">MiniMax</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#d97a2b"></div></div><span class="bar-val">5.70 s</span></div></div></div><div class="chart-card"><h4>输出 1920×1080</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">17 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:16.9%;background:#8b949e"></div></div><span class="bar-val">26 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:59.2%;background:#3b6fe0"></div></div><span class="bar-val">178 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:79.3%;background:#2ea44f"></div></div><span class="bar-val">442 ms</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">1.13 s</span></div></div></div><div class="chart-card"><h4>输出 3840×2160</h4><p class="note">log10 刻度 · 越短越快</p><div class="bars"><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双线性</span><div class="bar-track"><div class="bar" style="width:8.0%;background:#b6bcc4"></div></div><span class="bar-val">87 ms</span></div><div class="bar-row" title="Pillow 插值，CPU 单线程"><span class="bar-name">双三次</span><div class="bar-track"><div class="bar" style="width:15.9%;background:#8b949e"></div></div><span class="bar-val">122 ms</span></div><div class="bar-row"><span class="bar-name">TinySR</span><div class="bar-track"><div class="bar" style="width:50.8%;background:#3b6fe0"></div></div><span class="bar-val">539 ms</span></div><div class="bar-row" title="1× 网络（输入已是目标尺寸）"><span class="bar-name">DLSS-NR</span><div class="bar-track"><div class="bar" style="width:76.5%;background:#2ea44f"></div></div><span class="bar-val">1.61 s</span></div><div class="bar-row"><span class="bar-name">SinSR</span><div class="bar-track"><div class="bar" style="width:100.0%;background:#8a5cd6"></div></div><span class="bar-val">4.39 s</span></div></div></div></div>
     <p class="caveat">插值基线（双三次 / 双线性）是 CPU 上的 Pillow 调用，放进图里只是给个下界参考，不代表 GPU 上的插值开销。</p>
   </section>
 
@@ -296,6 +268,26 @@
       因此 FID 的方差比逐图指标大得多，只适合看量级。PSNR / SSIM 的箭头方向是「越高越好」，LPIPS / DISTS / NIQE / FID 是「越低越好」。</p>
   </section>
 
+  <section class="realsr-sec" id="srgd">
+    <h2>游戏素材 · SRGD（SRGD · SubwaySequencer）</h2>
+    <p class="lede">80 对：LR <span class="mono">480×270</span> → HR <span class="mono">1920×1080</span>（4×），取自 <a href="https://github.com/epishchik/SRGD" target="_blank" rel="noopener">SRGD</a> 的 <code>GameEngineData / SubwaySequencer / val</code> 分片。这是虚幻引擎<b>直接以 480×270 渲染</b>、再与 1080p 原生渲染配对的版本（不是先渲高分辨率再降采样），所以 LR 里带着真实的 aliasing 与 TAA 残影——这正是游戏超分与照片超分的不同之处。指标口径、权重、机器与上面那张 RealSR 表完全一致，只换了内容来源。</p>
+    <div class="mtable-wrap">
+      <table class="mtable">
+        <thead><tr><th class="l">方法</th><th class="l">参数量</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>DISTS ↓</th><th>NIQE ↓</th><th>MUSIQ ↑</th><th>MANIQA ↑</th><th>FID ↓</th></tr></thead>
+        <tbody>
+          <tr><th class="l">双线性</th><td class="l dim">—</td><td>26.29</td><td>0.8917</td><td>0.3491</td><td>0.2691</td><td>9.88</td><td>18.77</td><td>0.3438</td><td>103.52</td></tr>
+          <tr><th class="l">双三次</th><td class="l dim">—</td><td class="best">26.34</td><td class="best">0.8929</td><td>0.3339</td><td>0.2536</td><td>9.86</td><td>20.62</td><td>0.3449</td><td>98.11</td></tr>
+          <tr><th class="l">DLSS-NR</th><td class="l dim">147.7 M</td><td>25.87</td><td>0.8896</td><td>0.3645</td><td>0.2907</td><td>9.32</td><td>18.32</td><td>0.3488</td><td>109.37</td></tr>
+          <tr><th class="l">TinySR</th><td class="l dim">539.4 M</td><td>25.52</td><td>0.8619</td><td>0.2863</td><td class="best">0.1413</td><td>4.63</td><td>46.50</td><td>0.4585</td><td>87.57</td></tr>
+          <tr><th class="l">SinSR</th><td class="l dim">174.7 M</td><td>26.12</td><td>0.8830</td><td class="best">0.2781</td><td>0.1721</td><td>6.28</td><td>37.74</td><td>0.3980</td><td class="best">82.97</td></tr>
+          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">67.1 B</td><td>21.23</td><td>0.7965</td><td>0.3396</td><td>0.1727</td><td class="best">4.15</td><td class="best">47.75</td><td class="best">0.4728</td><td>96.47</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mtable-cap">80 对 · LR 480×270 → HR 1920×1080 · SRGD GameEngineData / SubwaySequencer · 单卡 H800 实跑</p>
+    <p class="caveat">两点口径：① 这组只有 80 对（SRGD 单场景 val 的全部），样本量小于 RealSR 的 100 对，单样本影响更大；FID 同样以整个目录（80 张）为一个集合计算。② SRGD 的 HR 是引擎渲染输出，几乎不含传感器噪声，而 RealSR 是相机实拍、带噪声与压缩痕迹，两者的难度构成不同，比较时看趋势而不是小数点。</p>
+  </section>
+
   <section class="realsr-sec" id="speed">
     <h2>推理速度 · 同机实测</h2>
     <p class="lede">每个数字都是同一台机器上跑出来的，不是论文里的引用值。GPU 为 <b>H800 80 GB</b>，fp16，batch = 1，预热 2 次后取 5 次的<b>中位数</b>；
@@ -306,37 +298,68 @@
           <th>端到端</th><th class="l">分段 / 开销</th><th>峰值显存</th></tr></thead>
         <tbody>
           <tr><th class="l">TinySR</th><td class="l dim">H800</td><td class="l">128×128 → 512×512</td>
-            <td class="best">21.5 ms</td><td class="l dim">编码 1.3 / transformer 13.1 / 解码 4.6 ms</td><td>1.2 GB</td></tr>
+            <td class="best">12.6 ms</td><td class="l dim">编码 1.5 / transformer 8.6 / 解码 2.3 ms</td><td>1.2 GB</td></tr>
           <tr><th class="l">TinySR</th><td class="l dim">H800</td><td class="l">480×270 → 1920×1080</td>
-            <td>237 ms</td><td class="l dim">15.5 / 192 / 27.2 ms · latent 切成 64×64 块</td><td>2.0 GB</td></tr>
+            <td>177 ms</td><td class="l dim">7.9 / 157 / 12.4 ms · latent 切成 64×64 块</td><td>2.0 GB</td></tr>
           <tr><th class="l">TinySR</th><td class="l dim">H800</td><td class="l">960×540 → 3840×2160</td>
-            <td>746 ms</td><td class="l dim">68.6 / 570 / 104 ms · latent 切成 64×64 块</td><td>5.9 GB</td></tr>
+            <td>539 ms</td><td class="l dim">30.8 / 461 / 46.5 ms · latent 切成 64×64 块</td><td>5.9 GB</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">H800</td><td class="l">128×128 → 512×512</td>
-            <td>248 ms</td><td class="l dim">1 块 × 209 ms（编码 + 单步 + 解码）</td><td>1.8 GB</td></tr>
+            <td>83.6 ms</td><td class="l dim">1 块 × 71.8 ms（编码 + 单步 + 解码）</td><td>1.8 GB</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">H800</td><td class="l">480×270 → 1920×1080</td>
-            <td>2.63 s</td><td class="l dim">4 块 × 610 ms（官方 256 / 步长 224 切块）</td><td>18.4 GB</td></tr>
+            <td>1.13 s</td><td class="l dim">4 块 × 261 ms（官方 256 / 步长 224 切块）</td><td>18.4 GB</td></tr>
           <tr><th class="l">SinSR</th><td class="l dim">H800</td><td class="l">960×540 → 3840×2160</td>
-            <td>10.4 s</td><td class="l dim">15 块 × 616 ms</td><td>18.5 GB</td></tr>
+            <td>4.39 s</td><td class="l dim">15 块 × 262 ms</td><td>18.5 GB</td></tr>
           <tr><th class="l">MiniMax H3-Image</th><td class="l dim">H800</td><td class="l">128×128 → 512×512</td>
             <td>5.70 s</td><td class="l dim">6 步去噪 ≈ 5.7 s，解码 9.7 ms</td><td>≈ 70 GB</td></tr>
           <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">512×512 → 同尺寸（1×）</td>
-            <td>265 ms</td><td class="l dim">152 层，输入输出同分辨率</td><td>1.1 GiB</td></tr>
+            <td>115 ms</td><td class="l dim">152 层，输入输出同分辨率</td><td>1.1 GiB</td></tr>
           <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">1920×1080 → 同尺寸（1×）</td>
-            <td>1.08 s</td><td class="l dim">—</td><td>3.0 GiB</td></tr>
+            <td>442 ms</td><td class="l dim">—</td><td>3.0 GiB</td></tr>
           <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">2560×1440 → 同尺寸（1×）</td>
-            <td>1.78 s</td><td class="l dim">—</td><td>4.9 GiB</td></tr>
+            <td>701 ms</td><td class="l dim">—</td><td>4.9 GiB</td></tr>
           <tr><th class="l">DLSS-NR</th><td class="l dim">H800</td><td class="l">3840×2160 → 同尺寸（1×）</td>
-            <td>4.02 s</td><td class="l dim">—</td><td>10.2 GiB</td></tr>
+            <td>1.61 s</td><td class="l dim">—</td><td>10.2 GiB</td></tr>
           <tr><th class="l">双三次 / 双线性</th><td class="l dim">CPU 单线程</td><td class="l">128×128 → 512×512</td>
             <td>3.4 / 2.3 ms</td><td class="l dim">Pillow 插值，无网络；1080p 26 / 17 ms，4K 122 / 87 ms</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="mtable-cap">同一 512×512 输出规格下：TinySR 21.5 ms，SinSR 248 ms（11.5×），MiniMax 5.70 s（265×）；到 4K 时差距同样维持（746 ms vs 10.4 s）。</p>
+    <p class="mtable-cap">同一 512×512 输出规格下：TinySR 12.6 ms，SinSR 83.6 ms（6.6×），DLSS-NR 115 ms，MiniMax 5.70 s（452×）；4K 时 TinySR 539 ms vs SinSR 4.39 s（8.2×）。</p>
     <p class="caveat">几点口径说明：TinySR 的 1080p / 4K 与 SinSR 的全部规格都走各自官方的切块推理，块数与单块耗时列在「分段 / 开销」里，所以这两行不是单纯的 FLOPs 缩放；
       MiniMax 的数字取自服务端日志的 <code>Pixel data generated successfully</code>，含 6 步去噪与解码，不含网络往返，100 次请求的分布是 min 5.60 s / 中位 5.70 s / max 5.84 s，
       首次冷启动请求 200 s 已剔除。DLSS-NR 的开箱设置 <code>torch.compile</code> 在 CUDA 上会编错（输出对 NVIDIA 参考仅 21.5 dB，而 eager 路径是 33.78 dB、与 CPU 逐位一致），表中是 <code>DLSSNR_COMPILE=0</code> 的数字；
       它在 M4 Pro CPU 上做同样的事要慢约 8–9×（1080p 8.4 s、4K 35.9 s）。</p>
+  </section>
+
+  <section class="methods-sec">
+    <h2>方法说明</h2>
+    <p class="lede">每个方法在做什么，按输入、输出与来源说明。点任意一张卡片看参数、权重体积与实测推理速度。</p>
+    <div class="methods">
+      <div class="method" data-method="lr">
+        <h3>LR<span>输入</span></h3>
+        <p>参考图 4× 下采样得到的低清图（如 3840×2560 → 960×640），是下面所有方法共同的起点。</p>
+      </div>
+      <div class="method" data-method="bicubic">
+        <h3>双三次<span>Bicubic</span></h3>
+        <p>Pillow 的双三次插值，把 LR 直接放大到参考尺寸。不做任何学习，作为插值基线；协议里另有一份双线性放大版本，同属基线。</p>
+      </div>
+      <div class="method is-ours" data-method="dlss">
+        <h3>DLSS-NR<span>DLSS 5</span></h3>
+        <p>NVIDIA 神经渲染网络的 PyTorch 复现，权重取自 <code>nvngx_dlssnr.dll</code> 310.9.16 的 preset 1（152 层）。只做 1×，输入是双线性放大图，输出与它同尺寸。</p>
+      </div>
+      <div class="method" data-method="tinysr">
+        <h3>TinySR<span>×4</span></h3>
+        <p>轻量级超分模型，官方权重。直接把 LR 作为输入，输出为参考尺寸的 4× 结果。</p>
+      </div>
+      <div class="method" data-method="sinsr">
+        <h3>SinSR<span>×4</span></h3>
+        <p>单步扩散式超分模型，官方权重。同样以 LR 为输入，一次前向输出 4× 结果。</p>
+      </div>
+      <div class="method" data-method="minimax">
+        <h3>MiniMax<span>生成式</span></h3>
+        <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
+      </div>
+    </div>
   </section>
 
   <details class="why-sec" id="why-psnr">
@@ -467,403 +490,123 @@ function initLens(grid){
 const RS_SAMPLES = [
 {
 "stem": "Canon_001_LR4",
-"label": "Canon 5D3 · 001"
-},
-{
-"stem": "Canon_002_LR4",
-"label": "Canon 5D3 · 002"
-},
-{
-"stem": "Canon_003_LR4",
-"label": "Canon 5D3 · 003"
-},
-{
-"stem": "Canon_004_LR4",
-"label": "Canon 5D3 · 004"
-},
-{
-"stem": "Canon_005_LR4",
-"label": "Canon 5D3 · 005"
-},
-{
-"stem": "Canon_006_LR4",
-"label": "Canon 5D3 · 006"
-},
-{
-"stem": "Canon_007_LR4",
-"label": "Canon 5D3 · 007"
-},
-{
-"stem": "Canon_008_LR4",
-"label": "Canon 5D3 · 008"
-},
-{
-"stem": "Canon_009_LR4",
-"label": "Canon 5D3 · 009"
-},
-{
-"stem": "Canon_010_LR4",
-"label": "Canon 5D3 · 010"
+"label": "Canon 5D3 · 001",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Canon_011_LR4",
-"label": "Canon 5D3 · 011"
-},
-{
-"stem": "Canon_012_LR4",
-"label": "Canon 5D3 · 012"
-},
-{
-"stem": "Canon_013_LR4",
-"label": "Canon 5D3 · 013"
-},
-{
-"stem": "Canon_014_LR4",
-"label": "Canon 5D3 · 014"
-},
-{
-"stem": "Canon_015_LR4",
-"label": "Canon 5D3 · 015"
-},
-{
-"stem": "Canon_016_LR4",
-"label": "Canon 5D3 · 016"
-},
-{
-"stem": "Canon_017_LR4",
-"label": "Canon 5D3 · 017"
-},
-{
-"stem": "Canon_018_LR4",
-"label": "Canon 5D3 · 018"
-},
-{
-"stem": "Canon_019_LR4",
-"label": "Canon 5D3 · 019"
-},
-{
-"stem": "Canon_020_LR4",
-"label": "Canon 5D3 · 020"
+"label": "Canon 5D3 · 011",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Canon_021_LR4",
-"label": "Canon 5D3 · 021"
-},
-{
-"stem": "Canon_022_LR4",
-"label": "Canon 5D3 · 022"
-},
-{
-"stem": "Canon_023_LR4",
-"label": "Canon 5D3 · 023"
-},
-{
-"stem": "Canon_024_LR4",
-"label": "Canon 5D3 · 024"
-},
-{
-"stem": "Canon_025_LR4",
-"label": "Canon 5D3 · 025"
-},
-{
-"stem": "Canon_026_LR4",
-"label": "Canon 5D3 · 026"
-},
-{
-"stem": "Canon_027_LR4",
-"label": "Canon 5D3 · 027"
-},
-{
-"stem": "Canon_028_LR4",
-"label": "Canon 5D3 · 028"
-},
-{
-"stem": "Canon_029_LR4",
-"label": "Canon 5D3 · 029"
-},
-{
-"stem": "Canon_030_LR4",
-"label": "Canon 5D3 · 030"
+"label": "Canon 5D3 · 021",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Canon_031_LR4",
-"label": "Canon 5D3 · 031"
-},
-{
-"stem": "Canon_032_LR4",
-"label": "Canon 5D3 · 032"
-},
-{
-"stem": "Canon_033_LR4",
-"label": "Canon 5D3 · 033"
-},
-{
-"stem": "Canon_034_LR4",
-"label": "Canon 5D3 · 034"
-},
-{
-"stem": "Canon_035_LR4",
-"label": "Canon 5D3 · 035"
-},
-{
-"stem": "Canon_036_LR4",
-"label": "Canon 5D3 · 036"
-},
-{
-"stem": "Canon_037_LR4",
-"label": "Canon 5D3 · 037"
-},
-{
-"stem": "Canon_038_LR4",
-"label": "Canon 5D3 · 038"
-},
-{
-"stem": "Canon_039_LR4",
-"label": "Canon 5D3 · 039"
-},
-{
-"stem": "Canon_040_LR4",
-"label": "Canon 5D3 · 040"
+"label": "Canon 5D3 · 031",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Canon_041_LR4",
-"label": "Canon 5D3 · 041"
-},
-{
-"stem": "Canon_042_LR4",
-"label": "Canon 5D3 · 042"
-},
-{
-"stem": "Canon_043_LR4",
-"label": "Canon 5D3 · 043"
-},
-{
-"stem": "Canon_044_LR4",
-"label": "Canon 5D3 · 044"
-},
-{
-"stem": "Canon_045_LR4",
-"label": "Canon 5D3 · 045"
-},
-{
-"stem": "Canon_046_LR4",
-"label": "Canon 5D3 · 046"
-},
-{
-"stem": "Canon_047_LR4",
-"label": "Canon 5D3 · 047"
-},
-{
-"stem": "Canon_048_LR4",
-"label": "Canon 5D3 · 048"
-},
-{
-"stem": "Canon_049_LR4",
-"label": "Canon 5D3 · 049"
-},
-{
-"stem": "Canon_050_LR4",
-"label": "Canon 5D3 · 050"
+"label": "Canon 5D3 · 041",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Nikon_001_LR4",
-"label": "Nikon D810 · 001"
-},
-{
-"stem": "Nikon_002_LR4",
-"label": "Nikon D810 · 002"
-},
-{
-"stem": "Nikon_003_LR4",
-"label": "Nikon D810 · 003"
-},
-{
-"stem": "Nikon_004_LR4",
-"label": "Nikon D810 · 004"
-},
-{
-"stem": "Nikon_005_LR4",
-"label": "Nikon D810 · 005"
-},
-{
-"stem": "Nikon_006_LR4",
-"label": "Nikon D810 · 006"
-},
-{
-"stem": "Nikon_007_LR4",
-"label": "Nikon D810 · 007"
-},
-{
-"stem": "Nikon_008_LR4",
-"label": "Nikon D810 · 008"
-},
-{
-"stem": "Nikon_009_LR4",
-"label": "Nikon D810 · 009"
-},
-{
-"stem": "Nikon_010_LR4",
-"label": "Nikon D810 · 010"
+"label": "Nikon D810 · 001",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Nikon_011_LR4",
-"label": "Nikon D810 · 011"
-},
-{
-"stem": "Nikon_012_LR4",
-"label": "Nikon D810 · 012"
-},
-{
-"stem": "Nikon_013_LR4",
-"label": "Nikon D810 · 013"
-},
-{
-"stem": "Nikon_014_LR4",
-"label": "Nikon D810 · 014"
-},
-{
-"stem": "Nikon_015_LR4",
-"label": "Nikon D810 · 015"
-},
-{
-"stem": "Nikon_016_LR4",
-"label": "Nikon D810 · 016"
-},
-{
-"stem": "Nikon_017_LR4",
-"label": "Nikon D810 · 017"
-},
-{
-"stem": "Nikon_018_LR4",
-"label": "Nikon D810 · 018"
-},
-{
-"stem": "Nikon_019_LR4",
-"label": "Nikon D810 · 019"
-},
-{
-"stem": "Nikon_020_LR4",
-"label": "Nikon D810 · 020"
+"label": "Nikon D810 · 011",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Nikon_021_LR4",
-"label": "Nikon D810 · 021"
-},
-{
-"stem": "Nikon_022_LR4",
-"label": "Nikon D810 · 022"
-},
-{
-"stem": "Nikon_023_LR4",
-"label": "Nikon D810 · 023"
-},
-{
-"stem": "Nikon_024_LR4",
-"label": "Nikon D810 · 024"
-},
-{
-"stem": "Nikon_025_LR4",
-"label": "Nikon D810 · 025"
-},
-{
-"stem": "Nikon_026_LR4",
-"label": "Nikon D810 · 026"
-},
-{
-"stem": "Nikon_027_LR4",
-"label": "Nikon D810 · 027"
-},
-{
-"stem": "Nikon_028_LR4",
-"label": "Nikon D810 · 028"
-},
-{
-"stem": "Nikon_029_LR4",
-"label": "Nikon D810 · 029"
-},
-{
-"stem": "Nikon_030_LR4",
-"label": "Nikon D810 · 030"
+"label": "Nikon D810 · 021",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Nikon_031_LR4",
-"label": "Nikon D810 · 031"
-},
-{
-"stem": "Nikon_032_LR4",
-"label": "Nikon D810 · 032"
-},
-{
-"stem": "Nikon_033_LR4",
-"label": "Nikon D810 · 033"
-},
-{
-"stem": "Nikon_034_LR4",
-"label": "Nikon D810 · 034"
-},
-{
-"stem": "Nikon_035_LR4",
-"label": "Nikon D810 · 035"
-},
-{
-"stem": "Nikon_036_LR4",
-"label": "Nikon D810 · 036"
-},
-{
-"stem": "Nikon_037_LR4",
-"label": "Nikon D810 · 037"
-},
-{
-"stem": "Nikon_038_LR4",
-"label": "Nikon D810 · 038"
-},
-{
-"stem": "Nikon_039_LR4",
-"label": "Nikon D810 · 039"
-},
-{
-"stem": "Nikon_040_LR4",
-"label": "Nikon D810 · 040"
+"label": "Nikon D810 · 031",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
 "stem": "Nikon_041_LR4",
-"label": "Nikon D810 · 041"
+"label": "Nikon D810 · 041",
+"dir": "media/realsr",
+"set": "照片（RealSR）"
 },
 {
-"stem": "Nikon_042_LR4",
-"label": "Nikon D810 · 042"
+"stem": "00003",
+"label": "游戏 · 00003",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_043_LR4",
-"label": "Nikon D810 · 043"
+"stem": "00038",
+"label": "游戏 · 00038",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_044_LR4",
-"label": "Nikon D810 · 044"
+"stem": "00084",
+"label": "游戏 · 00084",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_045_LR4",
-"label": "Nikon D810 · 045"
+"stem": "00117",
+"label": "游戏 · 00117",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_046_LR4",
-"label": "Nikon D810 · 046"
+"stem": "00160",
+"label": "游戏 · 00160",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_047_LR4",
-"label": "Nikon D810 · 047"
+"stem": "00200",
+"label": "游戏 · 00200",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_048_LR4",
-"label": "Nikon D810 · 048"
+"stem": "00254",
+"label": "游戏 · 00254",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_049_LR4",
-"label": "Nikon D810 · 049"
+"stem": "00297",
+"label": "游戏 · 00297",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 },
 {
-"stem": "Nikon_050_LR4",
-"label": "Nikon D810 · 050"
+"stem": "00343",
+"label": "游戏 · 00343",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
+},
+{
+"stem": "00377",
+"label": "游戏 · 00377",
+"dir": "media/srgd",
+"set": "游戏（SRGD · SubwaySequencer）"
 }
 ];
 const RS_TILES = [
@@ -886,7 +629,9 @@ function buildRsStrip(){
     const b = document.createElement("button");
     b.className = "thumb" + (row.stem === rsCurrent ? " on" : "");
     b.title = row.label;
-    b.innerHTML = `<img src="media/realsr/t_${row.stem}.jpg" data-fb="t_${row.stem}.jpg"
+    b.className += row.dir.includes("srgd") ? " thumb--game" : "";
+    b.title = `${row.set} · ${row.label}`;
+    b.innerHTML = `<img src="${row.dir}/t_${row.stem}.jpg" data-fb="t_${row.stem}.jpg"
       onerror="this.onerror=null;this.src=this.dataset.fb" alt="${row.label}" loading="lazy">`;
     b.onclick = () => { rsCurrent = row.stem; rsRender(); };
     strip.appendChild(b);
@@ -928,12 +673,13 @@ function rsRender(){
   rsCurrent = row.stem;
   const idx = RS_SAMPLES.findIndex(r => r.stem === row.stem) + 1;
   document.getElementById("rsName").textContent = row.label;
+  const size = row.dir.includes("srgd") ? "LR 480×270 → 1920×1080（4×）" : "LR 128×128 → 512×512（4×）";
   document.getElementById("rsMeta").textContent =
-    `${idx} / ${RS_SAMPLES.length} · LR 128×128 → 512×512（4×）· 鼠标悬停同步 3× 放大 · ← → 换样本`;
+    `${row.set} · ${idx} / ${RS_SAMPLES.length} · ${size} · 悬停同步 3× 放大 · ← → 换样本`;
   grid.innerHTML = RS_TILES.map(([key, name, size]) => `
     <div class="col">
       <div class="img-wrap" data-key="${key}">
-        <img src="media/realsr/${row.stem}__${key}.jpg" data-fb="${row.stem}__${key}.jpg"
+        <img src="${row.dir}/${row.stem}__${key}.jpg" data-fb="${row.stem}__${key}.jpg"
              onerror="this.onerror=null;this.src=this.dataset.fb" alt="${name}" data-size="${size}">
         <div class="lens"></div><div class="dot"></div>
       </div>
@@ -962,7 +708,7 @@ const METHODS = {
     title: "DLSS-NR（DLSS 5）", tag: "神经渲染后处理 · 1×",
     rows: [["输入", "双线性 4× 放大图，与输出同尺寸"], ["输出", "与输入同尺寸（1×）"],
            ["参数量", "147.7 M"], ["权重体积", "147 MB（weights.safetensors）"],
-           ["推理速度", "H800（eager 参考算术）：512×512 <b>265 ms</b> · 1920×1080 <b>1.08 s</b> · 2560×1440 <b>1.78 s</b> · 3840×2160 <b>4.02 s</b>；峰值显存 1.1 / 3.0 / 4.9 / 10.2 GiB"],
+           ["推理速度", "H800（eager 参考算术）：512×512 <b>115 ms</b> · 1920×1080 <b>442 ms</b> · 2560×1440 <b>701 ms</b> · 3840×2160 <b>1.61 s</b>；峰值显存 1.1 / 3.0 / 4.9 / 10.2 GiB"],
            ["CPU 对照", "同一网络在 M4 Pro 单线程：1080p 8.4 s、4K 35.9 s，即 H800 快约 8–9×"],
            ["结构", "152 层，preset 1"],
            ["运行", "PyTorch；<code>DLSSNR_COMPILE=0</code> 必须开——torch.compile 在 CUDA 上会编错，输出对 NVIDIA 参考只有 21.5 dB，eager 路径与 CPU 结果逐位一致"]],
@@ -974,8 +720,8 @@ const METHODS = {
     rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "539.4 M（脚本加载实测；权重文件合计 611.7 M，含未被加载的层）"],
            ["权重体积", "1.5 GB"],
-           ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>21.5 ms</b>；480×270→1920×1080 <b>237 ms</b>；960×540→3840×2160 <b>746 ms</b>（分段见下表）"],
-            ["推理开销", "其中 transformer 占 61% / 81% / 76%，VAE 编解码占其余；峰值显存 1.2 / 2.0 / 5.9 GB"],
+           ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>12.6 ms</b>；480×270→1920×1080 <b>177 ms</b>；960×540→3840×2160 <b>539 ms</b>（分段见下表）"],
+            ["推理开销", "transformer 占 68% / 88% / 86%，VAE 编解码占其余；峰值显存 1.2 / 2.0 / 5.9 GB"],
            ["论文", "arXiv 2508.17434（CVPR 2026 Findings）"]],
     links: [["Paper", "https://arxiv.org/abs/2508.17434"],
             ["GitHub", "https://github.com/Microtreei/TinySR"]],
@@ -985,8 +731,8 @@ const METHODS = {
     rows: [["输入", "LR（128×128 起，见上表）"], ["输出", "参考尺寸（4×）"],
            ["参数量", "174.7 M（SinSR_v1 119.4 M + VAE 55.3 M）"],
            ["权重体积", "765 MB"],
-           ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>248 ms</b>；480×270→1920×1080 <b>2.63 s</b>；960×540→3840×2160 <b>10.4 s</b>"],
-            ["推理开销", "官方 256/224 切块推理：1 / 4 / 15 块，每块 209 / 610 / 616 ms；峰值显存 1.8 / 18.4 / 18.5 GB"],
+           ["推理速度", "H800 · fp16 · batch 1 · 中位数：128×128→512×512 <b>83.6 ms</b>；480×270→1920×1080 <b>1.13 s</b>；960×540→3840×2160 <b>4.39 s</b>"],
+            ["推理开销", "官方 256/224 切块推理：1 / 4 / 15 块，每块 72 / 261 / 262 ms；峰值显存 1.8 / 18.4 / 18.5 GB"],
            ["论文", "arXiv 2311.14760（CVPR 2024）"]],
     links: [["Paper", "https://arxiv.org/abs/2311.14760"],
             ["GitHub", "https://github.com/wyf0912/SinSR"]],
