@@ -200,8 +200,9 @@
 
   <section class="realsr-samples" id="realsr-samples">
     <h2>逐样本交互对比</h2>
-    <p class="lede">整个测试集的 <b>100 个裁剪样本</b>都能切换（点下方缩略图条，或用 <b>← →</b> 键），八张图同步 3× 放大：
-      鼠标移到任一图上，其余七张跟到同一位置。
+    <p class="lede"><b>10 张真实照片</b>（RealSRVal_crop128，128×128 → 512×512）与 <b>10 帧游戏画面</b>
+      （SRGD · SubwaySequencer，480×270 → 1920×1080）都能切换（点下方缩略图条，或用 <b>← →</b> 键），八张图同步 3× 放大：
+      鼠标移到任一图上，其余七张跟到同一位置。缩略图里蓝色边框的是游戏样本。
       LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照；
       DLSS-NR 那一格是「双线性 4× 放大 → DLSS-NR 1×」的结果，规则与指标表一致。</p>
     <div class="strip" id="rsStrip"></div>
@@ -676,14 +677,17 @@ function rsRender(){
   const size = row.dir.includes("srgd") ? "LR 480×270 → 1920×1080（4×）" : "LR 128×128 → 512×512（4×）";
   document.getElementById("rsMeta").textContent =
     `${row.set} · ${idx} / ${RS_SAMPLES.length} · ${size} · 悬停同步 3× 放大 · ← → 换样本`;
-  grid.innerHTML = RS_TILES.map(([key, name, size]) => `
+  const isGame = (row.dir || "").includes("srgd");
+  const tileSize = k => isGame ? (k === "lr" ? "480×270" : "1920×1080")
+                               : (k === "lr" ? "128×128" : "512×512");
+  grid.innerHTML = RS_TILES.map(([key, name]) => `
     <div class="col">
       <div class="img-wrap" data-key="${key}">
         <img src="${row.dir}/${row.stem}__${key}.jpg" data-fb="${row.stem}__${key}.jpg"
-             onerror="this.onerror=null;this.src=this.dataset.fb" alt="${name}" data-size="${size}">
+             onerror="this.onerror=null;this.src=this.dataset.fb" alt="${name}">
         <div class="lens"></div><div class="dot"></div>
       </div>
-      <div class="col-label">${name}<span class="dim">${size}</span></div>
+      <div class="col-label">${name}<span class="dim">${tileSize(key)}</span></div>
     </div>`).join("");
   initLens(grid);
   buildRsStrip();
