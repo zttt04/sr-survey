@@ -750,6 +750,7 @@ const METHODS = {
            ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
            ["推理速度", "H800：128×128→512×512 <b>5.70 s</b>（100 次请求的服务器端中位数，min 5.60 / max 5.84）；大图 2976×1984–3433×5151 约 22.6–29.2 s"],
             ["推理开销", "6 步去噪占绝大部分，解码阶段仅 9.7 ms；峰值显存约 70 GB（单卡 H800）"],
+           ["文本模块", "用的是它自带的 <b>Qwen3-VL 文本编码器</b>（<code>MiniMaxH3Qwen3VLEncoder</code>，48.09 GB，常驻 <b>host 内存</b>不占显存）：每次请求都会走 TextEncoding → VisualEncoding → Denoising → Decoding 四段，我们送进去的是固定的一条英文超分指令"],
            ["内部缩放", "输入 LR 由服务端用 <b>PIL LANCZOS</b> 放大到短边 ≥ 1024 再进 VAE（480×270 → 约 1824×1024；128×128 → 1024×1024）；输出面积小于 min_generation_area 时，还会先在更大画布生成再用 LANCZOS 缩回目标尺寸（512×512 那一档就是这种情况）"],
            ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重。文本编码器从 MiniMax-H3 仓库单独加载、可独立卸载，所以峰值显存 ≈ 70 GB 对应的是 DiT+VAE，而不是 67 B 全量常驻"]],
     links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
