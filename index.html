@@ -73,6 +73,36 @@
   .method.is-ours{border-color:#a9dcbb;background:var(--accent-soft)}
   .method.is-ours h3{color:#14532d}
 
+  /* why bicubic psnr */
+  .why-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
+  .why-sec h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .why-sec .lede{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:82ch}
+  .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:900px){.why-grid{grid-template-columns:1fr}}
+  .why-card{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:14px 16px}
+  .why-card .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+    border-radius:50%;background:var(--accent-soft);color:#14532d;font-family:var(--mono);
+    font-size:11px;font-weight:600;margin-bottom:8px}
+  .why-card h3{margin:0;font-size:14px;font-weight:600}
+  .why-card p{margin:6px 0 0;font-size:13px;color:#4b5563;line-height:1.7}
+  .why-card code{font-family:var(--mono);font-size:11.5px}
+  .paper-fig{margin:20px 0 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .paper-fig > a{display:block;line-height:0;background:#fff}
+  .paper-fig img{display:block;width:100%;height:auto}
+  .paper-fig figcaption{padding:12px 16px 16px;font-size:12.5px;color:var(--muted);line-height:1.7;
+    border-top:1px solid var(--line)}
+  .paper-fig figcaption b{color:var(--ink);font-weight:600}
+  .paper-fig figcaption a{color:#14532d;text-decoration:underline;text-underline-offset:2px}
+  .paper-fig figcaption .nowrap{white-space:nowrap}
+  .paper-fig figcaption .hint{color:var(--ink)}
+  .takeaway{margin-top:18px;border:1px solid #a9dcbb;background:var(--accent-soft);border-radius:10px;
+    padding:14px 16px;font-size:13px;color:#14532d;line-height:1.75}
+  .takeaway .mono{font-family:var(--mono);font-size:12px}
+  .caveat{font-size:12px;color:var(--muted);margin:12px 0 0;line-height:1.7;max-width:92ch}
+  .quote{margin:14px 0 0;padding:12px 16px;border-left:3px solid #a9dcbb;background:#fafcfb;
+    font-size:13px;color:#374151;line-height:1.7;font-style:italic}
+  .quote span{display:block;margin-top:4px;font-style:normal;font-size:11.5px;color:var(--muted)}
+
   /* modal */
   .modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;
     background:rgba(17,24,39,.45)}
@@ -91,6 +121,29 @@
   .modal-links a{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid var(--line);
     border-radius:999px;font-size:13px;color:var(--ink);text-decoration:none}
   .modal-links a:hover{border-color:#a9dcbb;background:var(--accent-soft)}
+
+  /* real SR benchmark */
+  .realsr-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
+  .realsr-sec h2,.realsr-samples h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .realsr-sec .lede,.realsr-samples .lede{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:86ch}
+  .realsr-samples{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
+  .mtable-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table.mtable{border-collapse:collapse;width:100%;font-size:13px;min-width:820px}
+  .mtable th,.mtable td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+  .mtable thead th{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted);
+    background:var(--card);position:sticky;top:0}
+  .mtable .l{text-align:left}
+  .mtable tbody th{font-weight:600;font-size:13px}
+  .mtable tbody tr:last-child th,.mtable tbody tr:last-child td{border-bottom:0}
+  .mtable tbody tr:hover{background:#fcfdfc}
+  .mtable td.best{font-weight:700;color:#14532d;background:var(--accent-soft)}
+  .mtable .dim{color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+  .mtable-cap{font-size:11.5px;color:var(--muted);margin:8px 0 0;font-family:var(--mono)}
+  .ref-table{margin-top:16px}
+  .realsr-samples .grid.rs-grid{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.realsr-samples .grid.rs-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.realsr-samples .grid.rs-grid{grid-template-columns:1fr}}
+  .col-label .dim{display:block;font-family:var(--mono);font-size:10.5px;color:#9ca3af;line-height:1.4}
 
   footer{padding:26px 0 56px;margin-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
 </style>
@@ -113,6 +166,56 @@
     <div class="stats" id="stats"></div>
   </section>
 
+
+  <section class="realsr-sec" id="realsr">
+    <h2>定量对比 · RealSRVal_crop128</h2>
+    <p class="lede">100 个官方测试裁剪对：LR <span class="mono">128×128</span>，参考 <span class="mono">512×512</span>，固定 4×。
+      数据取自 StableSR 官方测试集里的 <code>RealSRVal_crop128</code>（TinySR、SinSR 论文所用的同一份 RealSR 验证集），
+      各方法均直接使用官方发布权重，没有微调或重训。
+      PSNR / SSIM 在 YCbCr 的 Y 通道上计算，与 TinySR、SinSR 论文口径一致；LPIPS / DISTS / NIQE / MUSIQ / MANIQA / FID 用 <code>pyiqa</code> 默认权重。</p>
+        <div class="mtable-wrap">
+      <table class="mtable">
+        <thead><tr><th class="l">方法</th><th class="l">参数量</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>DISTS ↓</th><th>NIQE ↓</th><th>MUSIQ ↑</th><th>MANIQA ↑</th><th>FID ↓</th></tr></thead>
+        <tbody>
+          <tr><th class="l">双线性</th><td class="l dim">—</td><td>26.88</td><td>0.7457</td><td>0.4736</td><td>0.2718</td><td>10.64</td><td>24.83</td><td>0.3447</td><td>146.06</td></tr>
+          <tr><th class="l">双三次</th><td class="l dim">—</td><td class="best">27.11</td><td class="best">0.7555</td><td>0.4564</td><td>0.2633</td><td>8.99</td><td>25.81</td><td>0.3529</td><td>140.84</td></tr>
+          <tr><th class="l">TinySR</th><td class="l dim">539.4 M</td><td>24.79</td><td>0.7171</td><td class="best">0.2806</td><td class="best">0.2123</td><td class="best">4.74</td><td class="best">69.78</td><td>0.6211</td><td class="best">118.16</td></tr>
+          <tr><th class="l">SinSR</th><td class="l dim">174.7 M</td><td>26.25</td><td>0.7342</td><td>0.3198</td><td>0.2349</td><td>6.32</td><td>60.59</td><td>0.5420</td><td>137.92</td></tr>
+          <tr><th class="l">MiniMax H3-Image</th><td class="l dim">67.1 B</td><td>19.59</td><td>0.5814</td><td>0.3867</td><td>0.2380</td><td>5.08</td><td>66.72</td><td class="best">0.6317</td><td>125.79</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mtable-cap">100 对 · LR 128×128 → HR 512×512 · 官方权重 · 2024-11 集群实测（H800）</p>
+
+    <div class="mtable-wrap ref-table">
+      <table class="mtable">
+        <thead><tr><th class="l">论文报告值（RealSR ×4，Y 通道）</th><th>PSNR ↑</th><th>SSIM ↑</th>
+          <th class="l">本页同口径复现</th></tr></thead>
+        <tbody>
+          <tr><th class="l">TinySR-s1</th><td>24.79</td><td>0.7171</td><td class="dim">24.79 / 0.7171</td></tr>
+          <tr><th class="l">SinSR-s1</th><td>26.27</td><td>0.7351</td><td class="dim">26.25 / 0.7342</td></tr>
+          <tr><th class="l">ResShift</th><td>26.39</td><td>0.7567</td><td class="dim">—</td></tr>
+          <tr><th class="l">BSRGAN</th><td>26.38</td><td>0.7651</td><td class="dim">—</td></tr>
+          <tr><th class="l">Real-ESRGAN</th><td>26.65</td><td>0.7603</td><td class="dim">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mtable-cap">TinySR (arXiv 2508.17434) Table, RealSR x4, Y channel。本页复现的 TinySR / SinSR 与论文报告值基本重合，说明测试集、权重与指标口径三者对得上。</p>
+    <p class="caveat">口径说明：LPIPS / DISTS 逐图计算后取平均；NIQE / MUSIQ / MANIQA 同为逐图平均；FID 以整目录（100 张）作为一个集合计算，
+      因此 FID 的方差比逐图指标大得多，只适合看量级。PSNR / SSIM 的箭头方向是「越高越好」，LPIPS / DISTS / NIQE / FID 是「越低越好」。</p>
+  </section>
+
+  <section class="realsr-samples" id="realsr-samples">
+    <h2>RealSR 逐样本对比</h2>
+    <p class="lede">同一份测试集里的 10 个裁剪样本，七张图同步 3× 放大：鼠标移到任一图上，其余六张跟到同一位置。
+      LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照。</p>
+    <div class="strip" id="rsStrip"></div>
+    <div class="stage-head">
+      <span class="stage-name" id="rsName"></span>
+      <span class="stage-meta" id="rsMeta"></span>
+    </div>
+    <div class="grid rs-grid" id="rsGrid"></div>
+  </section>
 
   <section class="methods-sec">
     <h2>方法说明</h2>
@@ -143,6 +246,69 @@
         <p>MiniMax 图像编辑接口的保内容输出，目标是改写观感而不是严格超分，因此与其他方法不完全是同一任务。</p>
       </div>
     </div>
+  </section>
+
+  <section class="why-sec" id="why-psnr">
+    <h2>为什么双三次的 PSNR 反而更高？</h2>
+    <p class="lede">这不是跑分出错。PSNR 衡量的是「和参考图逐像素有多接近」，不是「看起来有多清楚」；
+      在 4× 超分里，这两件事经常互相拉扯——双三次的 PSNR 更高，并不代表它更好。</p>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <span class="n">1</span>
+        <h3>PSNR 的最优解是「平均图」</h3>
+        <p>同一张 LR 对应无数张合理的 HR。逐像素误差（MSE）最小的那张，是把所有可能性平均后的结果：
+          细节被抹平、边缘发软。双三次插值给出的正是这种平滑的低频近似，用 L1/L2 训练的回归式超分也一样，
+          所以它们天然占 PSNR/SSIM 的便宜。SSIM 看的是局部亮度、对比度和结构，对「糊」同样比较宽容。</p>
+      </div>
+      <div class="why-card">
+        <span class="n">2</span>
+        <h3>扩散模型在「采样」，不是在「求平均」</h3>
+        <p>SinSR、TinySR 这类扩散模型从 <code>p(HR|LR)</code> 里采样一张具体的图，细节更锐、更像照片；
+          但生成的高频（草、毛发、砖缝、皮肤纹理）很难和参考图逐像素重合。纹理位置差一点，平方误差就会明显变大。
+          模型越敢补细节，PSNR 往往越低；把采样做得更确定、更接近均值，PSNR 会回来，图也会重新变糊。</p>
+      </div>
+      <div class="why-card">
+        <span class="n">3</span>
+        <h3>指标测的不是同一件事</h3>
+        <p>PSNR/SSIM 只看低层像素与局部结构；LPIPS 用深度特征衡量感知差异；病理里的 CONCH/UNI
+          则在基础模型的特征空间里衡量相似度。三者的排序经常不一致——「糊而准」和「锐而像」可以同时成立。</p>
+      </div>
+    </div>
+
+    <figure class="paper-fig">
+      <a href="media/zoomldm-table3.webp" target="_blank" rel="noopener" title="点击查看原图">
+        <img src="media/zoomldm-table3.webp" width="1998" height="532"
+             alt="ZoomLDM 论文 Table 3：TCGA-BRCA 与 BACH 上的超分结果。双三次的 SSIM、PSNR 最高，ZoomLDM 的 LPIPS、CONCH 等感知指标更好。">
+      </a>
+      <figcaption>
+        <b>图 · ZoomLDM（CVPR 2025）Table 3</b><span class="nowrap">（图源：<a href="https://arxiv.org/pdf/2411.16969" target="_blank" rel="noopener">arXiv:2411.16969</a>，CC BY 4.0）</span>：
+        在 TCGA-BRCA 与 BACH 组织病理图上的 4× 超分对比（粗体为该列最优，下划线为次优）。
+        双三次的 SSIM / PSNR 两项全部最高（TCGA-BRCA 24.37 dB，BACH 34.69 dB）；
+        但在感知与特征相似度指标上，扩散模型反超：TCGA-BRCA 的 LPIPS / CONCH / UNI 三项都由 ZoomLDM Infer emb 拿下（0.229 / 0.957 / 0.719）。
+        BACH 上 LPIPS、CONCH 归 ZoomLDM，UNI 则是双三次略高；双三次的 LPIPS/CONCH/UNI 与扩散模型其实很接近，
+        PSNR 却高出 4 dB 以上——PSNR 的领先被平滑基线放大了。
+        任务不同（组织病理 vs 游戏截图、照片），但 PSNR 与感知质量脱钩的机制相同。
+        <span class="hint">点击图片可看原图。</span>
+      </figcaption>
+    </figure>
+
+    <blockquote class="quote">
+      “SSIM and PSNR are slightly misleading as they favor the blurry bicubic images.”
+      <span>—— ZoomLDM 论文 4.4 节。大意：SSIM / PSNR 有点误导，因为它们偏爱模糊的双三次结果。</span>
+    </blockquote>
+
+    <div class="takeaway">
+      <b>放回本页：</b>20 个样本上，双三次平均 PSNR 为 <span class="mono">28.83 dB</span>，
+      SinSR 27.50 dB、DLSS-NR 26.55 dB、TinySR 24.41 dB、MiniMax 20.40 dB；
+      其中 17/20 个样本是双三次最高。PSNR 只说明「像素平均误差小」，不说明「细节对」。
+      看这个页面时，建议把 PSNR 当作一个维度而不是排行榜：把鼠标移到图上，用 3× 放大对比边缘、纹理和文字，
+      再判断哪一张更接近参考图。
+    </div>
+
+    <p class="caveat">补充：PSNR 本身仍是有意义的——它衡量保真度，适合压缩、医学测量这类任务；只是对生成式超分，
+      它和感知质量不是一回事。另外，不同论文的 PSNR 不能直接横比（GT 来源、JPEG 质量、裁剪与对齐方式都不同），
+      跨论文横比要非常谨慎；同一张表内的相对关系更可靠。</p>
   </section>
 
   <div class="modal" id="modal" aria-hidden="true">
@@ -1049,85 +1215,8 @@ function buildStrip(){
     b.className = "thumb" + (row.stem === current ? " on" : "");
     b.title = LABEL[row.stem] || row.stem;
     b.innerHTML = `<img src="media/bm_${row.stem}.bicubic.jpg" alt="${b.title}" loading="lazy">`;
-    b.onclick = () => { current = row.stem; render();
+    b.onclick = () => { current = row.stem; render(); };
 
-/* ---------- method info modal ---------- */
-const METHODS = {
-  lr: {
-    title: "LR（输入）", tag: "低分辨率输入",
-    rows: [["尺寸", `${LR_RANGE}（参考图的 1/4 边长）`], ["参数量", "0"]],
-    links: [],
-    note: "",
-  },
-  bicubic: {
-    title: "双三次插值", tag: "Bicubic baseline",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
-           ["参数量", "0"], ["实现", "Pillow BICUBIC"]],
-    links: [],
-  },
-  dlss: {
-    title: "DLSS-NR（DLSS 5）", tag: "神经渲染后处理 · 1×",
-    rows: [["输入", `双线性放大图，${REF_RANGE}`], ["输出", "与输入同尺寸"],
-           ["参数量", "147.7 M"], ["权重体积", "147 MB（weights.safetensors）"],
-           ["推理速度", "输入=输出：929×530 → 3.3 s · 1920×1080 → 8.4 s · 2560×1440 → 13.8 s · 3840×2160 → 35.9 s（M4 Pro CPU）"],
-           ["结构", "152 层，preset 1"], ["运行", "PyTorch · CPU"]],
-    links: [["复现仓库", "https://github.com/mauri870/dlssnr-pytorch"],
-            ["验证样本", "https://github.com/mauri870/DLSSNR-RDNA3"]],
-  },
-  tinysr: {
-    title: "TinySR", tag: "剪枝扩散 · ×4",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
-           ["参数量", "611.7 M（backbone 579.7 M + LoRA 30.6 M + VAE 1.4 M）"],
-           ["权重体积", "1.5 GB"],
-           ["推理速度", "输入 480×270–960×540 → 输出 1920×1080–3840×2160：端到端 0.94 s/张、模型前向 0.25 s/张（H800，17 张平均）"],
-           ["论文", "arXiv 2508.17434（CVPR 2026 Findings）"]],
-    links: [["Paper", "https://arxiv.org/abs/2508.17434"],
-            ["GitHub", "https://github.com/Microtreei/TinySR"]],
-  },
-  sinsr: {
-    title: "SinSR", tag: "单步扩散超分 · ×4",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
-           ["参数量", "174.7 M（SinSR_v1 119.4 M + VAE 55.3 M）"],
-           ["权重体积", "765 MB"],
-           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：6.1 s/张（H800，6 张平均）"],
-           ["论文", "arXiv 2311.14760（CVPR 2024）"]],
-    links: [["Paper", "https://arxiv.org/abs/2311.14760"],
-            ["GitHub", "https://github.com/wyf0912/SinSR"]],
-  },
-  minimax: {
-    title: "MiniMax H3-Image", tag: "生成式图像编辑",
-    rows: [["输入", `LR，${LR_RANGE}`], ["输出", `参考尺寸，${REF_RANGE}`],
-           ["参数量", "67.1 B（生成主干 33.1 B + 文本编码器 33.4 B + VAE 0.58 B）"],
-           ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
-           ["推理速度", "输入 744×496–858×1287 → 输出 2976×1984–3433×5151：22.6–29.2 s/张（H800 日志，denoise 约 22–28 s + decode 0.4 s）"],
-           ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重"]],
-    links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
-  },
-};
-
-const modal = document.getElementById("modal");
-function openModal(key){
-  const m = METHODS[key];
-  if (!m) return;
-  document.getElementById("modalTitle").textContent = m.title;
-  document.getElementById("modalTag").textContent = m.tag;
-  document.getElementById("modalKv").innerHTML = m.rows
-    .map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
-  document.getElementById("modalLinks").innerHTML = m.links
-    .map(([label, href]) => `<a href="${href}" target="_blank" rel="noopener">${label} ↗</a>`).join("");
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden", "false");
-}
-function closeModal(){
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
-}
-document.querySelectorAll(".method[data-method]").forEach(card => {
-  card.addEventListener("click", () => openModal(card.dataset.method));
-});
-document.getElementById("modalClose").addEventListener("click", closeModal);
-modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); }); };
     strip.appendChild(b);
   });
 }
@@ -1153,7 +1242,8 @@ function render(){
   document.getElementById("stats").innerHTML =
     [["bicubic","双三次"],["dlss_lr","DLSS-NR"],["tinysr","TinySR"],["sinsr","SinSR"],["minimax","MiniMax"]]
       .map(([k, n]) => `${n} <b>${row.scores[k].psnr.toFixed(2)}</b> dB`).join(" · ") +
-    ` <span style="color:#9ca3af">（对参考图，越高越好）</span>`;
+    ` <span style="color:#9ca3af">（对参考图，越高越好 ·
+       <a href="#why-psnr" style="color:inherit;text-decoration:underline;text-underline-offset:2px">PSNR 高 ≠ 更清晰</a>）</span>`;
 
   initLens(grid);
   buildStrip();
@@ -1197,6 +1287,94 @@ function initLens(grid){
 
 render();
 
+/* ---------- RealSR 逐样本对比 ---------- */
+const RS_SAMPLES = [
+{
+"stem": "Canon_001_LR4",
+"label": "Canon 5D3 · 001"
+},
+{
+"stem": "Canon_008_LR4",
+"label": "Canon 5D3 · 008"
+},
+{
+"stem": "Canon_015_LR4",
+"label": "Canon 5D3 · 015"
+},
+{
+"stem": "Canon_022_LR4",
+"label": "Canon 5D3 · 022"
+},
+{
+"stem": "Canon_029_LR4",
+"label": "Canon 5D3 · 029"
+},
+{
+"stem": "Canon_036_LR4",
+"label": "Canon 5D3 · 036"
+},
+{
+"stem": "Canon_043_LR4",
+"label": "Canon 5D3 · 043"
+},
+{
+"stem": "Canon_050_LR4",
+"label": "Canon 5D3 · 050"
+},
+{
+"stem": "Nikon_007_LR4",
+"label": "Nikon D810 · 007"
+},
+{
+"stem": "Nikon_014_LR4",
+"label": "Nikon D810 · 014"
+}
+];
+const RS_TILES = [
+  ["lr", "LR（输入）", "128×128"],
+  ["base_bicubic", "双三次", "512×512"],
+  ["base_bilinear", "双线性", "512×512"],
+  ["tinysr", "TinySR", "512×512"],
+  ["sinsr", "SinSR", "512×512"],
+  ["minimax", "MiniMax", "512×512"],
+  ["hr", "参考 HR", "512×512"],
+];
+let rsCurrent = (new URLSearchParams(location.search).get("r")) || (RS_SAMPLES[0] && RS_SAMPLES[0].stem);
+
+function buildRsStrip(){
+  const strip = document.getElementById("rsStrip");
+  if (!strip) return;
+  strip.innerHTML = "";
+  RS_SAMPLES.forEach(row => {
+    const b = document.createElement("button");
+    b.className = "thumb" + (row.stem === rsCurrent ? " on" : "");
+    b.title = row.label;
+    b.innerHTML = `<img src="media/realsr/${row.stem}__hr.jpg" alt="${row.label}" loading="lazy">`;
+    b.onclick = () => { rsCurrent = row.stem; rsRender(); };
+    strip.appendChild(b);
+  });
+}
+
+function rsRender(){
+  const grid = document.getElementById("rsGrid");
+  if (!grid || !RS_SAMPLES.length) return;
+  const row = RS_SAMPLES.find(r => r.stem === rsCurrent) || RS_SAMPLES[0];
+  rsCurrent = row.stem;
+  document.getElementById("rsName").textContent = row.label;
+  document.getElementById("rsMeta").textContent = "LR 128×128 → 512×512（4×）";
+  grid.innerHTML = RS_TILES.map(([key, name, size]) => `
+    <div class="col">
+      <div class="img-wrap" data-key="${key}">
+        <img src="media/realsr/${row.stem}__${key}.jpg" alt="${name}" data-size="${size}">
+        <div class="lens"></div><div class="dot"></div>
+      </div>
+      <div class="col-label">${name}<span class="dim">${size}</span></div>
+    </div>`).join("");
+  initLens(grid);
+  buildRsStrip();
+}
+rsRender();
+
 /* ---------- method info modal ---------- */
 const METHODS = {
   lr: {
@@ -1223,9 +1401,9 @@ const METHODS = {
   tinysr: {
     title: "TinySR", tag: "剪枝扩散 · ×4",
     rows: [["输入", `LR，${LR_RANGE}`], ["输出", `×4，${REF_RANGE}`],
-           ["参数量", "611.7 M（backbone 579.7 M + LoRA 30.6 M + VAE 1.4 M）"],
+           ["参数量", "539.4 M（脚本加载实测；权重文件合计 611.7 M，含未被加载的层）"],
            ["权重体积", "1.5 GB"],
-           ["推理速度", "输入 480×270–960×540 → 输出 1920×1080–3840×2160：端到端 0.94 s/张、模型前向 0.25 s/张（H800，17 张平均）"],
+           ["推理速度", "输入 480×270–960×540 → 输出 1920×1080–3840×2160：端到端 0.94 s/张；350×250 → 1400×1000：0.40 s/张（H800 实测）"],
            ["论文", "arXiv 2508.17434（CVPR 2026 Findings）"]],
     links: [["Paper", "https://arxiv.org/abs/2508.17434"],
             ["GitHub", "https://github.com/Microtreei/TinySR"]],
