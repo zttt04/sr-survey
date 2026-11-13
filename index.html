@@ -182,7 +182,8 @@
 
   <section class="realsr-samples" id="realsr-samples">
     <h2>逐样本交互对比</h2>
-    <p class="lede">同一份测试集里的 10 个裁剪样本，八张图同步 3× 放大：鼠标移到任一图上，其余七张跟到同一位置。
+    <p class="lede">整个测试集的 <b>100 个裁剪样本</b>都能切换（点下方缩略图条，或用 <b>← →</b> 键），八张图同步 3× 放大：
+      鼠标移到任一图上，其余七张跟到同一位置。
       LR 以最近邻 4× 放大显示（真实分辨率 128×128），这样它和 512×512 的结果在同一尺度上可直接对照；
       DLSS-NR 那一格是「双线性 4× 放大 → DLSS-NR 1×」的结果，规则与指标表一致。</p>
     <div class="strip" id="rsStrip"></div>
@@ -406,6 +407,42 @@
 </div>
 
 <script>
+/* ---------- 同步放大镜 ---------- */
+function initLens(grid){
+  const hosts = [...grid.querySelectorAll(".img-wrap")];
+  const show = (px, py) => {
+    for (const host of hosts){
+      const w = host.clientWidth, h = host.clientHeight;
+      const lens = host.querySelector(".lens"), dot = host.querySelector(".dot");
+      const size = lens.offsetWidth;
+      if (!w || !h || !size) continue;
+      const ZOOM = 3;
+      lens.style.backgroundImage = `url("${host.querySelector("img").src}")`;
+      lens.style.backgroundSize = `${w * ZOOM}px ${h * ZOOM}px`;
+      lens.style.backgroundPosition = `${-(px * w * ZOOM - size / 2)}px ${-(py * h * ZOOM - size / 2)}px`;
+      let lx = px * w + 10, ly = py * h + 10;
+      if (lx + size > w) lx = px * w - 10 - size;
+      if (ly + size > h) ly = py * h - 10 - size;
+      lens.style.transform = `translate(${Math.max(0, Math.min(w - size, lx))}px, ${Math.max(0, Math.min(h - size, ly))}px)`;
+      lens.style.opacity = 1;
+      dot.style.transform = `translate(${px * w}px, ${py * h}px)`;
+      dot.style.opacity = 1;
+    }
+  };
+  const hide = () => hosts.forEach(h => {
+    h.querySelector(".lens").style.opacity = 0;
+    h.querySelector(".dot").style.opacity = 0;
+  });
+  hosts.forEach(host => {
+    host.onpointermove = e => {
+      const r = host.getBoundingClientRect();
+      show(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+           Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
+    };
+    host.onpointerleave = hide;
+  });
+}
+
 /* ---------- RealSR 逐样本对比 ---------- */
 const RS_SAMPLES = [
 {
@@ -413,40 +450,400 @@ const RS_SAMPLES = [
 "label": "Canon 5D3 · 001"
 },
 {
+"stem": "Canon_002_LR4",
+"label": "Canon 5D3 · 002"
+},
+{
+"stem": "Canon_003_LR4",
+"label": "Canon 5D3 · 003"
+},
+{
+"stem": "Canon_004_LR4",
+"label": "Canon 5D3 · 004"
+},
+{
+"stem": "Canon_005_LR4",
+"label": "Canon 5D3 · 005"
+},
+{
+"stem": "Canon_006_LR4",
+"label": "Canon 5D3 · 006"
+},
+{
+"stem": "Canon_007_LR4",
+"label": "Canon 5D3 · 007"
+},
+{
 "stem": "Canon_008_LR4",
 "label": "Canon 5D3 · 008"
+},
+{
+"stem": "Canon_009_LR4",
+"label": "Canon 5D3 · 009"
+},
+{
+"stem": "Canon_010_LR4",
+"label": "Canon 5D3 · 010"
+},
+{
+"stem": "Canon_011_LR4",
+"label": "Canon 5D3 · 011"
+},
+{
+"stem": "Canon_012_LR4",
+"label": "Canon 5D3 · 012"
+},
+{
+"stem": "Canon_013_LR4",
+"label": "Canon 5D3 · 013"
+},
+{
+"stem": "Canon_014_LR4",
+"label": "Canon 5D3 · 014"
 },
 {
 "stem": "Canon_015_LR4",
 "label": "Canon 5D3 · 015"
 },
 {
+"stem": "Canon_016_LR4",
+"label": "Canon 5D3 · 016"
+},
+{
+"stem": "Canon_017_LR4",
+"label": "Canon 5D3 · 017"
+},
+{
+"stem": "Canon_018_LR4",
+"label": "Canon 5D3 · 018"
+},
+{
+"stem": "Canon_019_LR4",
+"label": "Canon 5D3 · 019"
+},
+{
+"stem": "Canon_020_LR4",
+"label": "Canon 5D3 · 020"
+},
+{
+"stem": "Canon_021_LR4",
+"label": "Canon 5D3 · 021"
+},
+{
 "stem": "Canon_022_LR4",
 "label": "Canon 5D3 · 022"
+},
+{
+"stem": "Canon_023_LR4",
+"label": "Canon 5D3 · 023"
+},
+{
+"stem": "Canon_024_LR4",
+"label": "Canon 5D3 · 024"
+},
+{
+"stem": "Canon_025_LR4",
+"label": "Canon 5D3 · 025"
+},
+{
+"stem": "Canon_026_LR4",
+"label": "Canon 5D3 · 026"
+},
+{
+"stem": "Canon_027_LR4",
+"label": "Canon 5D3 · 027"
+},
+{
+"stem": "Canon_028_LR4",
+"label": "Canon 5D3 · 028"
 },
 {
 "stem": "Canon_029_LR4",
 "label": "Canon 5D3 · 029"
 },
 {
+"stem": "Canon_030_LR4",
+"label": "Canon 5D3 · 030"
+},
+{
+"stem": "Canon_031_LR4",
+"label": "Canon 5D3 · 031"
+},
+{
+"stem": "Canon_032_LR4",
+"label": "Canon 5D3 · 032"
+},
+{
+"stem": "Canon_033_LR4",
+"label": "Canon 5D3 · 033"
+},
+{
+"stem": "Canon_034_LR4",
+"label": "Canon 5D3 · 034"
+},
+{
+"stem": "Canon_035_LR4",
+"label": "Canon 5D3 · 035"
+},
+{
 "stem": "Canon_036_LR4",
 "label": "Canon 5D3 · 036"
+},
+{
+"stem": "Canon_037_LR4",
+"label": "Canon 5D3 · 037"
+},
+{
+"stem": "Canon_038_LR4",
+"label": "Canon 5D3 · 038"
+},
+{
+"stem": "Canon_039_LR4",
+"label": "Canon 5D3 · 039"
+},
+{
+"stem": "Canon_040_LR4",
+"label": "Canon 5D3 · 040"
+},
+{
+"stem": "Canon_041_LR4",
+"label": "Canon 5D3 · 041"
+},
+{
+"stem": "Canon_042_LR4",
+"label": "Canon 5D3 · 042"
 },
 {
 "stem": "Canon_043_LR4",
 "label": "Canon 5D3 · 043"
 },
 {
+"stem": "Canon_044_LR4",
+"label": "Canon 5D3 · 044"
+},
+{
+"stem": "Canon_045_LR4",
+"label": "Canon 5D3 · 045"
+},
+{
+"stem": "Canon_046_LR4",
+"label": "Canon 5D3 · 046"
+},
+{
+"stem": "Canon_047_LR4",
+"label": "Canon 5D3 · 047"
+},
+{
+"stem": "Canon_048_LR4",
+"label": "Canon 5D3 · 048"
+},
+{
+"stem": "Canon_049_LR4",
+"label": "Canon 5D3 · 049"
+},
+{
 "stem": "Canon_050_LR4",
 "label": "Canon 5D3 · 050"
+},
+{
+"stem": "Nikon_001_LR4",
+"label": "Nikon D810 · 001"
+},
+{
+"stem": "Nikon_002_LR4",
+"label": "Nikon D810 · 002"
+},
+{
+"stem": "Nikon_003_LR4",
+"label": "Nikon D810 · 003"
+},
+{
+"stem": "Nikon_004_LR4",
+"label": "Nikon D810 · 004"
+},
+{
+"stem": "Nikon_005_LR4",
+"label": "Nikon D810 · 005"
+},
+{
+"stem": "Nikon_006_LR4",
+"label": "Nikon D810 · 006"
 },
 {
 "stem": "Nikon_007_LR4",
 "label": "Nikon D810 · 007"
 },
 {
+"stem": "Nikon_008_LR4",
+"label": "Nikon D810 · 008"
+},
+{
+"stem": "Nikon_009_LR4",
+"label": "Nikon D810 · 009"
+},
+{
+"stem": "Nikon_010_LR4",
+"label": "Nikon D810 · 010"
+},
+{
+"stem": "Nikon_011_LR4",
+"label": "Nikon D810 · 011"
+},
+{
+"stem": "Nikon_012_LR4",
+"label": "Nikon D810 · 012"
+},
+{
+"stem": "Nikon_013_LR4",
+"label": "Nikon D810 · 013"
+},
+{
 "stem": "Nikon_014_LR4",
 "label": "Nikon D810 · 014"
+},
+{
+"stem": "Nikon_015_LR4",
+"label": "Nikon D810 · 015"
+},
+{
+"stem": "Nikon_016_LR4",
+"label": "Nikon D810 · 016"
+},
+{
+"stem": "Nikon_017_LR4",
+"label": "Nikon D810 · 017"
+},
+{
+"stem": "Nikon_018_LR4",
+"label": "Nikon D810 · 018"
+},
+{
+"stem": "Nikon_019_LR4",
+"label": "Nikon D810 · 019"
+},
+{
+"stem": "Nikon_020_LR4",
+"label": "Nikon D810 · 020"
+},
+{
+"stem": "Nikon_021_LR4",
+"label": "Nikon D810 · 021"
+},
+{
+"stem": "Nikon_022_LR4",
+"label": "Nikon D810 · 022"
+},
+{
+"stem": "Nikon_023_LR4",
+"label": "Nikon D810 · 023"
+},
+{
+"stem": "Nikon_024_LR4",
+"label": "Nikon D810 · 024"
+},
+{
+"stem": "Nikon_025_LR4",
+"label": "Nikon D810 · 025"
+},
+{
+"stem": "Nikon_026_LR4",
+"label": "Nikon D810 · 026"
+},
+{
+"stem": "Nikon_027_LR4",
+"label": "Nikon D810 · 027"
+},
+{
+"stem": "Nikon_028_LR4",
+"label": "Nikon D810 · 028"
+},
+{
+"stem": "Nikon_029_LR4",
+"label": "Nikon D810 · 029"
+},
+{
+"stem": "Nikon_030_LR4",
+"label": "Nikon D810 · 030"
+},
+{
+"stem": "Nikon_031_LR4",
+"label": "Nikon D810 · 031"
+},
+{
+"stem": "Nikon_032_LR4",
+"label": "Nikon D810 · 032"
+},
+{
+"stem": "Nikon_033_LR4",
+"label": "Nikon D810 · 033"
+},
+{
+"stem": "Nikon_034_LR4",
+"label": "Nikon D810 · 034"
+},
+{
+"stem": "Nikon_035_LR4",
+"label": "Nikon D810 · 035"
+},
+{
+"stem": "Nikon_036_LR4",
+"label": "Nikon D810 · 036"
+},
+{
+"stem": "Nikon_037_LR4",
+"label": "Nikon D810 · 037"
+},
+{
+"stem": "Nikon_038_LR4",
+"label": "Nikon D810 · 038"
+},
+{
+"stem": "Nikon_039_LR4",
+"label": "Nikon D810 · 039"
+},
+{
+"stem": "Nikon_040_LR4",
+"label": "Nikon D810 · 040"
+},
+{
+"stem": "Nikon_041_LR4",
+"label": "Nikon D810 · 041"
+},
+{
+"stem": "Nikon_042_LR4",
+"label": "Nikon D810 · 042"
+},
+{
+"stem": "Nikon_043_LR4",
+"label": "Nikon D810 · 043"
+},
+{
+"stem": "Nikon_044_LR4",
+"label": "Nikon D810 · 044"
+},
+{
+"stem": "Nikon_045_LR4",
+"label": "Nikon D810 · 045"
+},
+{
+"stem": "Nikon_046_LR4",
+"label": "Nikon D810 · 046"
+},
+{
+"stem": "Nikon_047_LR4",
+"label": "Nikon D810 · 047"
+},
+{
+"stem": "Nikon_048_LR4",
+"label": "Nikon D810 · 048"
+},
+{
+"stem": "Nikon_049_LR4",
+"label": "Nikon D810 · 049"
+},
+{
+"stem": "Nikon_050_LR4",
+"label": "Nikon D810 · 050"
 }
 ];
 const RS_TILES = [
@@ -469,20 +866,38 @@ function buildRsStrip(){
     const b = document.createElement("button");
     b.className = "thumb" + (row.stem === rsCurrent ? " on" : "");
     b.title = row.label;
-    b.innerHTML = `<img src="media/realsr/${row.stem}__hr.jpg" data-fb="${row.stem}__hr.jpg"
+    b.innerHTML = `<img src="media/realsr/t_${row.stem}.jpg" data-fb="t_${row.stem}.jpg"
       onerror="this.onerror=null;this.src=this.dataset.fb" alt="${row.label}" loading="lazy">`;
     b.onclick = () => { rsCurrent = row.stem; rsRender(); };
     strip.appendChild(b);
   });
+  const active = strip.querySelector(".thumb.on");
+  if (active) active.scrollIntoView({ block: "nearest", inline: "center" });
 }
+
+function rsStep(delta){
+  const i = RS_SAMPLES.findIndex(r => r.stem === rsCurrent);
+  const next = Math.max(0, Math.min(RS_SAMPLES.length - 1, (i < 0 ? 0 : i) + delta));
+  if (RS_SAMPLES[next] && RS_SAMPLES[next].stem !== rsCurrent){
+    rsCurrent = RS_SAMPLES[next].stem;
+    rsRender();
+  }
+}
+document.addEventListener("keydown", e => {
+  if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.key === "ArrowLeft") rsStep(-1);
+  if (e.key === "ArrowRight") rsStep(1);
+});
 
 function rsRender(){
   const grid = document.getElementById("rsGrid");
   if (!grid || !RS_SAMPLES.length) return;
   const row = RS_SAMPLES.find(r => r.stem === rsCurrent) || RS_SAMPLES[0];
   rsCurrent = row.stem;
+  const idx = RS_SAMPLES.findIndex(r => r.stem === row.stem) + 1;
   document.getElementById("rsName").textContent = row.label;
-  document.getElementById("rsMeta").textContent = "LR 128×128 → 512×512（4×）";
+  document.getElementById("rsMeta").textContent =
+    `${idx} / ${RS_SAMPLES.length} · LR 128×128 → 512×512（4×）· 鼠标悬停同步 3× 放大 · ← → 换样本`;
   grid.innerHTML = RS_TILES.map(([key, name, size]) => `
     <div class="col">
       <div class="img-wrap" data-key="${key}">
