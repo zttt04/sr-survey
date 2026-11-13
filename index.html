@@ -265,7 +265,8 @@
       数据取自 StableSR 官方测试集里的 <code>RealSRVal_crop128</code>（TinySR、SinSR 论文所用的同一份 RealSR 验证集），
       各方法均直接使用官方发布权重，没有微调或重训。
       PSNR / SSIM 在 YCbCr 的 Y 通道上计算，与 TinySR、SinSR 论文口径一致；LPIPS / DISTS / NIQE / MUSIQ / MANIQA / FID 用 <code>pyiqa</code> 默认权重。
-      DLSS-NR 这个网络只做 1×，不能吃 128×128 的 LR，所以它的输入是先双线性放大到 512×512 的图，输出同尺寸——这一行衡量的是「放大 + 增强」的组合，而不是真正的 4× 重建。</p>
+      DLSS-NR 这个网络只做 1×，不能吃 128×128 的 LR，所以它的输入是先双线性放大到 512×512 的图，输出同尺寸——这一行衡量的是「放大 + 增强」的组合，而不是真正的 4× 重建。
+      MiniMax 则是把原始 LR 和「目标 512×512」一起交给模型服务，放大在它内部完成（见下方注释）。</p>
         <div class="mtable-wrap">
       <table class="mtable">
         <thead><tr><th class="l">方法</th><th class="l">参数量</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>DISTS ↓</th><th>NIQE ↓</th><th>MUSIQ ↑</th><th>MANIQA ↑</th><th>FID ↓</th></tr></thead>
@@ -749,6 +750,7 @@ const METHODS = {
            ["权重体积", "约 146 GB（目录占 218 GB，含 transformer/vae 的第二种格式副本）"],
            ["推理速度", "H800：128×128→512×512 <b>5.70 s</b>（100 次请求的服务器端中位数，min 5.60 / max 5.84）；大图 2976×1984–3433×5151 约 22.6–29.2 s"],
             ["推理开销", "6 步去噪占绝大部分，解码阶段仅 9.7 ms；峰值显存约 70 GB（单卡 H800）"],
+           ["内部缩放", "输入 LR 由服务端用 <b>PIL LANCZOS</b> 放大到短边 ≥ 1024 再进 VAE（480×270 → 约 1824×1024；128×128 → 1024×1024）；输出面积小于 min_generation_area 时，还会先在更大画布生成再用 LANCZOS 缩回目标尺寸（512×512 那一档就是这种情况）"],
            ["说明", "保内容编辑接口，非严格 SR baseline；transformer 与 transformer_diffusers 为同一套权重。文本编码器从 MiniMax-H3 仓库单独加载、可独立卸载，所以峰值显存 ≈ 70 GB 对应的是 DiT+VAE，而不是 67 B 全量常驻"]],
     links: [["模型权重", "https://huggingface.co/MiniMaxAI/MiniMax-H3-Image"]],
   },
