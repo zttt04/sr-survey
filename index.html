@@ -74,8 +74,23 @@
   .method.is-ours h3{color:#14532d}
 
   /* why bicubic psnr */
-  .why-sec{padding:26px 0 10px;border-top:1px solid var(--line);margin-top:26px;scroll-margin-top:20px}
-  .why-sec h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  .why-sec{margin-top:26px;scroll-margin-top:20px;border-top:1px solid var(--line);padding-top:22px}
+  .why-sec > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
+    padding:13px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+    transition:border-color .15s,box-shadow .15s,background .15s}
+  .why-sec > summary::-webkit-details-marker{display:none}
+  .why-sec > summary:hover{border-color:#c9d3dd;box-shadow:0 6px 18px rgba(0,0,0,.05)}
+  .why-sec > summary .why-title{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .why-sec > summary .why-hint{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .why-sec > summary .why-hint::after{content:" ▾"}
+  .why-sec .t-close{display:none}
+  .why-sec[open] .t-open{display:none}
+  .why-sec[open] .t-close{display:inline}
+  .why-sec[open] > summary{border-color:#a9dcbb;background:var(--accent-soft);border-bottom-left-radius:0;
+    border-bottom-right-radius:0}
+  .why-sec[open] > summary .why-title{color:#14532d}
+  .why-sec[open] > summary .why-hint::after{content:" ▴"}
+  .why-sec .why-body{padding:18px 2px 0}
   .why-sec .lede{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:82ch}
   .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   @media(max-width:900px){.why-grid{grid-template-columns:1fr}}
@@ -324,71 +339,76 @@
     </div>
   </section>
 
-  <section class="why-sec" id="why-psnr">
-    <h2>为什么双三次的 PSNR 反而更高？</h2>
-    <p class="lede">这不是跑分出错。PSNR 衡量的是「和参考图逐像素有多接近」，不是「看起来有多清楚」；
-      在 4× 超分里，这两件事经常互相拉扯——双三次的 PSNR 更高，并不代表它更好。</p>
+  <details class="why-sec" id="why-psnr">
+    <summary>
+      <span class="why-title">为什么双三次的 PSNR 反而更高？</span>
+      <span class="why-hint"><span class="t-open">点击展开</span><span class="t-close">点击收起</span></span>
+    </summary>
+    <div class="why-body">
+      <p class="lede">这不是跑分出错。PSNR 衡量的是「和参考图逐像素有多接近」，不是「看起来有多清楚」；
+        在 4× 超分里，这两件事经常互相拉扯——双三次的 PSNR 更高，并不代表它更好。</p>
 
-    <div class="why-grid">
-      <div class="why-card">
-        <span class="n">1</span>
-        <h3>PSNR 的最优解是「平均图」</h3>
-        <p>同一张 LR 对应无数张合理的 HR。逐像素误差（MSE）最小的那张，是把所有可能性平均后的结果：
-          细节被抹平、边缘发软。双三次插值给出的正是这种平滑的低频近似，用 L1/L2 训练的回归式超分也一样，
-          所以它们天然占 PSNR/SSIM 的便宜。SSIM 看的是局部亮度、对比度和结构，对「糊」同样比较宽容。</p>
+      <div class="why-grid">
+        <div class="why-card">
+          <span class="n">1</span>
+          <h3>PSNR 的最优解是「平均图」</h3>
+          <p>同一张 LR 对应无数张合理的 HR。逐像素误差（MSE）最小的那张，是把所有可能性平均后的结果：
+            细节被抹平、边缘发软。双三次插值给出的正是这种平滑的低频近似，用 L1/L2 训练的回归式超分也一样，
+            所以它们天然占 PSNR/SSIM 的便宜。SSIM 看的是局部亮度、对比度和结构，对「糊」同样比较宽容。</p>
+        </div>
+        <div class="why-card">
+          <span class="n">2</span>
+          <h3>扩散模型在「采样」，不是在「求平均」</h3>
+          <p>SinSR、TinySR 这类扩散模型从 <code>p(HR|LR)</code> 里采样一张具体的图，细节更锐、更像照片；
+            但生成的高频（草、毛发、砖缝、皮肤纹理）很难和参考图逐像素重合。纹理位置差一点，平方误差就会明显变大。
+            模型越敢补细节，PSNR 往往越低；把采样做得更确定、更接近均值，PSNR 会回来，图也会重新变糊。</p>
+        </div>
+        <div class="why-card">
+          <span class="n">3</span>
+          <h3>指标测的不是同一件事</h3>
+          <p>PSNR/SSIM 只看低层像素与局部结构；LPIPS 用深度特征衡量感知差异；病理里的 CONCH/UNI
+            则在基础模型的特征空间里衡量相似度。三者的排序经常不一致——「糊而准」和「锐而像」可以同时成立。</p>
+        </div>
       </div>
-      <div class="why-card">
-        <span class="n">2</span>
-        <h3>扩散模型在「采样」，不是在「求平均」</h3>
-        <p>SinSR、TinySR 这类扩散模型从 <code>p(HR|LR)</code> 里采样一张具体的图，细节更锐、更像照片；
-          但生成的高频（草、毛发、砖缝、皮肤纹理）很难和参考图逐像素重合。纹理位置差一点，平方误差就会明显变大。
-          模型越敢补细节，PSNR 往往越低；把采样做得更确定、更接近均值，PSNR 会回来，图也会重新变糊。</p>
+
+      <figure class="paper-fig">
+        <a href="media/zoomldm-table3.webp" target="_blank" rel="noopener" title="点击查看原图"
+           onerror="this.href='zoomldm-table3.webp'">
+          <img src="media/zoomldm-table3.webp" width="1998" height="532"
+               data-fb="zoomldm-table3.webp"
+               onerror="this.onerror=null;this.src=this.dataset.fb"
+               alt="ZoomLDM 论文 Table 3：TCGA-BRCA 与 BACH 上的超分结果。双三次的 SSIM、PSNR 最高，ZoomLDM 的 LPIPS、CONCH 等感知指标更好。">
+        </a>
+        <figcaption>
+          <b>图 · ZoomLDM（CVPR 2025）Table 3</b><span class="nowrap">（图源：<a href="https://arxiv.org/pdf/2411.16969" target="_blank" rel="noopener">arXiv:2411.16969</a>，CC BY 4.0）</span>：
+          在 TCGA-BRCA 与 BACH 组织病理图上的 4× 超分对比（粗体为该列最优，下划线为次优）。
+          双三次的 SSIM / PSNR 两项全部最高（TCGA-BRCA 24.37 dB，BACH 34.69 dB）；
+          但在感知与特征相似度指标上，扩散模型反超：TCGA-BRCA 的 LPIPS / CONCH / UNI 三项都由 ZoomLDM Infer emb 拿下（0.229 / 0.957 / 0.719）。
+          BACH 上 LPIPS、CONCH 归 ZoomLDM，UNI 则是双三次略高；双三次的 LPIPS/CONCH/UNI 与扩散模型其实很接近，
+          PSNR 却高出 4 dB 以上——PSNR 的领先被平滑基线放大了。
+          任务不同（组织病理 vs 游戏截图、照片），但 PSNR 与感知质量脱钩的机制相同。
+          <span class="hint">点击图片可看原图。</span>
+        </figcaption>
+      </figure>
+
+      <blockquote class="quote">
+        “SSIM and PSNR are slightly misleading as they favor the blurry bicubic images.”
+        <span>—— ZoomLDM 论文 4.4 节。大意：SSIM / PSNR 有点误导，因为它们偏爱模糊的双三次结果。</span>
+      </blockquote>
+
+      <div class="takeaway">
+        <b>放回本页：</b>100 对 RealSR 上，双三次平均 PSNR 为 <span class="mono">27.11 dB</span>，
+        双线性 26.88、DLSS-NR <span class="mono">26.56</span>、SinSR 26.25、TinySR 24.79、MiniMax 19.59 dB；
+        排序和感知指标几乎相反：LPIPS 最好的是 TinySR（0.281，双三次 0.456），DISTS 与 NIQE 也由 TinySR 拿下。
+        PSNR 只说明「像素平均误差小」，不说明「细节对」——把上面的逐样本区放大看边缘、砖缝、文字，
+        再判断哪一张更接近参考图，比看排行榜有用。
       </div>
-      <div class="why-card">
-        <span class="n">3</span>
-        <h3>指标测的不是同一件事</h3>
-        <p>PSNR/SSIM 只看低层像素与局部结构；LPIPS 用深度特征衡量感知差异；病理里的 CONCH/UNI
-          则在基础模型的特征空间里衡量相似度。三者的排序经常不一致——「糊而准」和「锐而像」可以同时成立。</p>
-      </div>
+
+      <p class="caveat">补充：PSNR 本身仍是有意义的——它衡量保真度，适合压缩、医学测量这类任务；只是对生成式超分，
+        它和感知质量不是一回事。另外，不同论文的 PSNR 不能直接横比（GT 来源、JPEG 质量、裁剪与对齐方式都不同），
+        跨论文横比要非常谨慎；同一张表内的相对关系更可靠。</p>
     </div>
-
-    <figure class="paper-fig">
-      <a href="media/zoomldm-table3.webp" target="_blank" rel="noopener" title="点击查看原图"
-         onerror="this.href='zoomldm-table3.webp'">
-        <img src="media/zoomldm-table3.webp" width="1998" height="532"
-             data-fb="zoomldm-table3.webp"
-             onerror="this.onerror=null;this.src=this.dataset.fb"
-             alt="ZoomLDM 论文 Table 3：TCGA-BRCA 与 BACH 上的超分结果。双三次的 SSIM、PSNR 最高，ZoomLDM 的 LPIPS、CONCH 等感知指标更好。">
-      </a>
-      <figcaption>
-        <b>图 · ZoomLDM（CVPR 2025）Table 3</b><span class="nowrap">（图源：<a href="https://arxiv.org/pdf/2411.16969" target="_blank" rel="noopener">arXiv:2411.16969</a>，CC BY 4.0）</span>：
-        在 TCGA-BRCA 与 BACH 组织病理图上的 4× 超分对比（粗体为该列最优，下划线为次优）。
-        双三次的 SSIM / PSNR 两项全部最高（TCGA-BRCA 24.37 dB，BACH 34.69 dB）；
-        但在感知与特征相似度指标上，扩散模型反超：TCGA-BRCA 的 LPIPS / CONCH / UNI 三项都由 ZoomLDM Infer emb 拿下（0.229 / 0.957 / 0.719）。
-        BACH 上 LPIPS、CONCH 归 ZoomLDM，UNI 则是双三次略高；双三次的 LPIPS/CONCH/UNI 与扩散模型其实很接近，
-        PSNR 却高出 4 dB 以上——PSNR 的领先被平滑基线放大了。
-        任务不同（组织病理 vs 游戏截图、照片），但 PSNR 与感知质量脱钩的机制相同。
-        <span class="hint">点击图片可看原图。</span>
-      </figcaption>
-    </figure>
-
-    <blockquote class="quote">
-      “SSIM and PSNR are slightly misleading as they favor the blurry bicubic images.”
-      <span>—— ZoomLDM 论文 4.4 节。大意：SSIM / PSNR 有点误导，因为它们偏爱模糊的双三次结果。</span>
-    </blockquote>
-
-    <div class="takeaway">
-      <b>放回本页：</b>100 对 RealSR 上，双三次平均 PSNR 为 <span class="mono">27.11 dB</span>，
-      双线性 26.88、DLSS-NR <span class="mono">26.56</span>、SinSR 26.25、TinySR 24.79、MiniMax 19.59 dB；
-      排序和感知指标几乎相反：LPIPS 最好的是 TinySR（0.281，双三次 0.456），DISTS 与 NIQE 也由 TinySR 拿下。
-      PSNR 只说明「像素平均误差小」，不说明「细节对」——把上面的逐样本区放大看边缘、砖缝、文字，
-      再判断哪一张更接近参考图，比看排行榜有用。
-    </div>
-
-    <p class="caveat">补充：PSNR 本身仍是有意义的——它衡量保真度，适合压缩、医学测量这类任务；只是对生成式超分，
-      它和感知质量不是一回事。另外，不同论文的 PSNR 不能直接横比（GT 来源、JPEG 质量、裁剪与对齐方式都不同），
-      跨论文横比要非常谨慎；同一张表内的相对关系更可靠。</p>
-  </section>
+  </details>
 
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -883,6 +903,18 @@ function rsStep(delta){
     rsRender();
   }
 }
+/* 锚点直达时自动展开「为什么双三次 PSNR 更高」 */
+(function(){
+  const panel = document.getElementById("why-psnr");
+  if (!panel) return;
+  const sync = () => { if (location.hash === "#why-psnr") panel.open = true; };
+  sync();
+  addEventListener("hashchange", sync);
+  panel.querySelector("summary").addEventListener("click", () => {
+    if (panel.open) history.replaceState(null, "", location.pathname + location.search);
+  });
+})();
+
 document.addEventListener("keydown", e => {
   if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   if (e.key === "ArrowLeft") rsStep(-1);
@@ -993,6 +1025,18 @@ document.querySelectorAll(".method[data-method]").forEach(card => {
 });
 document.getElementById("modalClose").addEventListener("click", closeModal);
 modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+/* 锚点直达时自动展开「为什么双三次 PSNR 更高」 */
+(function(){
+  const panel = document.getElementById("why-psnr");
+  if (!panel) return;
+  const sync = () => { if (location.hash === "#why-psnr") panel.open = true; };
+  sync();
+  addEventListener("hashchange", sync);
+  panel.querySelector("summary").addEventListener("click", () => {
+    if (panel.open) history.replaceState(null, "", location.pathname + location.search);
+  });
+})();
+
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 </script>
 </body>
